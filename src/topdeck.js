@@ -1,6 +1,7 @@
-export class Stack {
-  constructor() {}
-}
+import Card from "./Card"
+import Stack, { Deck } from "./Stack"
+
+export { Card, Stack, Deck }
 
 /*
 Card 
@@ -14,7 +15,7 @@ Player
       -> deck.draw(taker)
 
 Pools (nonlinear cardgroups)
-
+  
 Stacks (linear cardgroups)
   Deck
     All cards hidden
