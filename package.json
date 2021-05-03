@@ -1,6 +1,6 @@
 {
   "name": "topdeck",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "cards and dice game library",
   "main": "index.js",
   "scripts": {
