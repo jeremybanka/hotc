@@ -1,6 +1,10 @@
 module.exports = {
-  extends: [`airbnb-base`, `prettier`],
-  plugins: [`prettier`],
+  extends: [
+    `airbnb`,
+    `plugin:@typescript-eslint/recommended`,
+  ],
+  plugins: [`@typescript-eslint`],
+  parser: `@typescript-eslint/parser`,
   parserOptions: {
     ecmaVersion: 12,
   },
@@ -8,6 +12,13 @@ module.exports = {
     browser: true,
     es2021: true,
     jest: true,
+  },
+  settings: {
+    "import/resolver": {
+      node: {
+        extensions: [`.js`, `.ts`],
+      },
+    },
   },
   rules: {
     "arrow-parens": [`error`, `as-needed`],
@@ -25,7 +36,17 @@ module.exports = {
     "curly": [`error`, `multi-line`, `consistent`],
     "function-paren-newline": `off`,
     "implicit-arrow-linebreak": `off`,
-    "jsx-quotes": [`error`, `prefer-single`],
+    "import/extensions": [
+      `error`,
+      `ignorePackages`,
+      {
+        js: `never`,
+        jsx: `never`,
+        ts: `never`,
+        tsx: `never`,
+      },
+    ],
+    "jsx-quotes": [`error`, `prefer-double`],
     "keyword-spacing": [
       `error`,
       {
@@ -89,7 +110,11 @@ module.exports = {
         consistent: true,
       },
     ],
-    "operator-linebreak": [`error`, `before`],
+    "operator-linebreak": [
+      `error`,
+      `after`,
+      { overrides: { "?": `before`, ":": `before` } },
+    ],
     "prefer-destructuring": [
       `error`,
       {
@@ -106,7 +131,6 @@ module.exports = {
         enforceForRenamedProperties: false,
       },
     ],
-    "prettier/prettier": [`error`],
     "quotes": [`error`, `backtick`],
     "quote-props": [`error`, `consistent`, { unnecessary: false }],
     "semi": [`error`, `never`],
