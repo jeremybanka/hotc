@@ -4,18 +4,18 @@ import Stack, { Deck } from "./Stack"
 export { Card, Stack, Deck }
 
 /*
-Card 
+Card
   Methods:
     discard()
     play()
 
-Player 
+Player
   Methods:
     drawFrom(deck)
       -> deck.draw(taker)
 
 Pools (nonlinear cardgroups)
-  
+
 Stacks (linear cardgroups)
   Deck
     All cards hidden
@@ -42,6 +42,5 @@ Structure ()
   Spread
     All cards public
   Grid
-
 
 */

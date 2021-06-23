@@ -1,5 +1,5 @@
 import { v4 as genId } from "uuid"
-import { a } from "../node_modules/eny/src"
+import { a } from "./lab/eny/build/node"
 
 const { shuffle } = a
 
