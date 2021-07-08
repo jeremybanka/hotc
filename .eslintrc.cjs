@@ -1,6 +1,6 @@
 module.exports = {
   extends: [`airbnb`, `plugin:@typescript-eslint/recommended`],
-  plugins: [`@typescript-eslint`],
+  plugins: [`@typescript-eslint`, `jest`],
   parser: `@typescript-eslint/parser`,
   parserOptions: {
     ecmaVersion: 12,
