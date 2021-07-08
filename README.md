@@ -1,28 +1,28 @@
-#### Play Cards
+# HOTC: "Host of the Cards"
 
 #### By Jeremy Banka
 
 ## Technologies Used
 
-- ES6
-- Jest for testing
-- Prettier and Eslint (airbnb style) for formatting
+- 🖋 TypeScript
+- 📦 Node.js
+- ⏭ Express.js
+- 🔌 Socket.io
+- 🧊 Webpack 5
+- 🃏 Jest
+- 🛠️ Eslint Airbnb
 
 ## Description
 
-- `export`: these functions turn topdeck specifications back into hexcodes
-- `identify`: these functions make qualitative assessments
-- `import`: these functions turn hexcodes into topdeck specifications
-- `modify`: currently unused
-- `preconfig`: default settings for using topdeck
-- `solveFor`: one-way operations
-- `utils`: basic functions for handling data
+...
 
 ## Setup/Installation Requirements
 
-- `gh repo clone jeremybanka/topdeck` OR `git clone https://github.com/jeremybanka/topdeck` to download the repo
-- `cd topdeck` to enter the repo folder
+- `gh repo clone jeremybanka/hotc` OR `git clone https://github.com/jeremybanka/hotc` to download the repo
+- `cd hotc` to enter the repo folder
 - `npm i` to install necessary development dependencies to node_modules
+- `npm run start` to run the server
+- `npm run test` to see coverage and tests
 
 ## Known Bugs
 
