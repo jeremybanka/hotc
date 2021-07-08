@@ -1,8 +1,5 @@
 module.exports = {
-  extends: [
-    `airbnb`,
-    `plugin:@typescript-eslint/recommended`,
-  ],
+  extends: [`airbnb`, `plugin:@typescript-eslint/recommended`],
   plugins: [`@typescript-eslint`],
   parser: `@typescript-eslint/parser`,
   parserOptions: {
@@ -112,7 +109,7 @@ module.exports = {
     ],
     "operator-linebreak": [
       `error`,
-      `after`,
+      `before`,
       { overrides: { "?": `before`, ":": `before` } },
     ],
     "prefer-destructuring": [
