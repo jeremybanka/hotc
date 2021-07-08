@@ -1,4 +1,4 @@
-import { CardId } from "../../util/Id"
+import { CardId } from "./util/Id"
 import { privacy } from "./types"
 
 export default class Card {

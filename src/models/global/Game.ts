@@ -1,4 +1,4 @@
-import { GameId, PlayerId, TrueId, VirtualId } from "../../util/Id"
+import { GameId, PlayerId, TrueId, VirtualId } from "./util/Id"
 import Player from "./Player"
 
 type action = `draw` | `undraw`

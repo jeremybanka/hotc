@@ -1,4 +1,6 @@
-export * from './lib'
+export * from './Game'
+export * from './Card'
+export * from './CardGroup'
 export * from './types'
 
 /*

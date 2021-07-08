@@ -1,6 +1,6 @@
 import { immerable } from "immer"
 import { a } from "../../../../eny/src"
-import UUID from "../../util/Id"
+import UUID from "./util/Id"
 import Card from "./Card"
 import { privacy } from "./types"
 

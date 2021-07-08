@@ -1,4 +1,4 @@
-import { PlayerId, Witness } from "../../util/Id"
+import { PlayerId, Witness } from "./util/Id"
 
 export default class Player extends Witness {
   id: PlayerId
