@@ -1,29 +1,25 @@
 import { GameId, PlayerId, TrueId, VirtualId } from "./util/Id"
 import Player from "./Player"
+import Card from "./Card"
+import CardGroup from "./CardGroup"
 
 type action = `draw` | `undraw`
 
-interface Request {
-  targets: VirtualId[]
-  action: action
+interface Zone {
+  content: Card | CardGroup
 }
 
-interface Event {
-  from: PlayerId
-  action: action
-  targets: TrueId[]
-}
-
-interface VirtualEvent {
-  from: PlayerId
-  action: action
-  targets: VirtualId[]
+interface Layout {
+  zones: Zone[]
 }
 
 interface GameState {
-  players: Map<PlayerId, Player>
+  table: Map<PlayerId, Player>
   turnOrder: PlayerId[]
-  dealer: PlayerId
+  layouts: {
+    common: Layout,
+    individual: Map<PlayerId, Layout[]>
+  }
 }
 
 export default class Game {
@@ -38,9 +34,11 @@ export default class Game {
   constructor() {
     this.id = new GameId()
     this.players = {}
-    this.state = { players: new Map(), turnOrder: [], dealer: new PlayerId() }
+    this.state = {
+      turnOrder: [],
+    }
     this.startingStateSnapshot = {
-      players: new Map(), turnOrder: [], dealer: new PlayerId(),
+      players: new Map(), turnOrder: [],
     }
   }
 }

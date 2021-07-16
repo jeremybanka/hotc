@@ -1,7 +1,9 @@
-import { PlayerId, Witness } from "./util/Id"
+import { IAction, IRequest, PlayerId, Spectator } from "./util/Id"
 
-export default class Player extends Witness {
+export default class PlayerServer extends Spectator {
   id: PlayerId
+
+  displayName: string
 
   // hand: Card[]
 
@@ -9,21 +11,28 @@ export default class Player extends Witness {
 
   // discardPile: ICard[]
 
-  constructor() {
+  constructor(displayName: string) {
     super()
     this.id = new PlayerId()
+    this.displayName = displayName
     // this.hand = []
     // this.deck = []
     // discardPile = []
   }
+
+  requestAction = (request: IRequest): IAction => ({
+    from: this.id,
+    type: request.type,
+    targets: this.devirtualizeIds(request.targets),
+  })
 }
 
 /*
 Player brings cards into game
 
-Cards reside within stacks. They belong to cycles.
+Cards reside within CardGroups. They belong to cycles.
 
-Stacks reside within layouts
+CardGroups [Decks, Hands, Piles] reside within layouts
 
 Layouts reside within
 

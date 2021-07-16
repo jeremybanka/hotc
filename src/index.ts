@@ -1,6 +1,5 @@
 import { io } from "./server"
-
-let tick = 0
+import { getState, setState, addPlayer } from "./store"
 
 io.on(`connection`, socket => {
   console.log(`connect: ${socket.id}`)
@@ -10,7 +9,7 @@ io.on(`connection`, socket => {
   })
 
   socket.on(`mouse`, data => {
-    tick++
+    setState(state => { state.tick++ })
     const position = JSON.parse(data).passivePosition
     socket.broadcast.emit(`mouse`, position)
     console.log(position)
@@ -24,6 +23,7 @@ io.on(`connection`, socket => {
 })
 
 setInterval(() => {
-  console.log(tick)
-  tick = 0
-}, 1000)
+  addPlayer()
+  console.log(getState())
+  setState(state => { state.tick = 0 })
+}, 4000)

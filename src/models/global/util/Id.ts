@@ -78,7 +78,7 @@ export const thawId = (frozenId: string): Id => {
       : new trueIdClassDict[of](str)
 }
 
-export class Witness { // players[playerId].virtualize(trueId)
+export class Spectator { // players[playerId].virtualize(trueId)
   private virtualIds: Record<string, VirtualId>
 
   private trueIds: Record<string, TrueId>
@@ -95,26 +95,37 @@ export class Witness { // players[playerId].virtualize(trueId)
   } = (id: TrueId): VirtualId =>
     this.virtualIds[id.toString()] || new anonClassDict[id.of](nanoid())
 
+  virtualizeIds = (reals: TrueId[]): VirtualId[] =>
+    reals.map((target:TrueId) => this.virtualizeId(target))
+
   devirtualizeId: {
     (id: VirtualCardId): CardId
     (id: VirtualCardGroupId): CardGroupId
     (id: VirtualCardCycleId): CardCycleId
   } = (id: VirtualId): TrueId => this.trueIds[id.toString()]
 
+  devirtualizeIds = (virtuals: VirtualId[]): TrueId[] =>
+    virtuals.map(target => this.devirtualizeId(target))
+
   virtualizeAction = (action: IAction): IVirtualAction => ({
     ...action,
-    targets: action.targets.map((target:TrueId) => this.virtualizeId(target)),
+    targets: this.devirtualizeIds(action.targets),
   })
 }
 
-type actionType = `draw` | `destroy` | `discard` | `mill`
+export type actionType = `draw` | `destroy` | `discard` | `mill`
 
-interface IAction {
+export interface IRequest {
+  targets: VirtualId[]
+  type: actionType
+}
+
+export interface IAction {
   from: PlayerId
   type: actionType
   targets: TrueId[]
 }
 
-interface IVirtualAction extends IAction {
+export interface IVirtualAction extends IAction {
   targets: VirtualId[]
 }
