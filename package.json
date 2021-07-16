@@ -60,6 +60,7 @@
     "immer": "^9.0.3",
     "lodash": "^4.17.21",
     "nanoid": "^3.1.23",
+    "socketio-auth": "^0.1.1",
     "socket.io": "^4.1.2",
     "zustand": "^3.5.4"
   }
