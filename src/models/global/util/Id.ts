@@ -1,5 +1,7 @@
 import { nanoid } from "nanoid"
 
+export const isNanoId = (x:string): boolean => new RegExp(/^[A-Za-z0-9_-]{0,21}$/).test(x)
+
 export default class Id {
   private str: string
 
@@ -54,7 +56,7 @@ const anonClassDict = {
 }
 
 interface preFrozenId {
-  nano: string
+  str: string
   of: string
   isVirtual: boolean
   isAnon: boolean
@@ -62,18 +64,18 @@ interface preFrozenId {
 
 export const freezeId = (id: Id): string => {
   const { of, isVirtual, isAnon } = id
-  const nano = id.toString()
-  const idObj: preFrozenId = { nano, of, isVirtual, isAnon }
+  const str = id.toString()
+  const idObj: preFrozenId = { str, of, isVirtual, isAnon }
   return JSON.stringify(idObj)
 }
 
 export const thawId = (frozenId: string): Id => {
-  const { nano, of, isVirtual, isAnon }: preFrozenId = JSON.parse(frozenId)
+  const { str, of, isVirtual, isAnon }: preFrozenId = JSON.parse(frozenId)
   return isAnon
-    ? new anonClassDict[of](nano)
+    ? new anonClassDict[of](str)
     : isVirtual
-      ? new virtualIdClassDict[of](nano)
-      : new trueIdClassDict[of](nano)
+      ? new virtualIdClassDict[of](str)
+      : new trueIdClassDict[of](str)
 }
 
 export class Witness { // players[playerId].virtualize(trueId)
@@ -86,17 +88,33 @@ export class Witness { // players[playerId].virtualize(trueId)
     this.trueIds = {}
   }
 
-  virtualize: {
+  virtualizeId: {
     (id: CardId): VirtualCardId
     (id: CardGroupId): VirtualCardGroupId
     (id: CardCycleId): VirtualCardCycleId
   } = (id: TrueId): VirtualId =>
-    this.virtualIds[id.toString()]
-    || new anonClassDict[id.of](id.toString())
+    this.virtualIds[id.toString()] || new anonClassDict[id.of](nanoid())
 
-  devirtualize: {
+  devirtualizeId: {
     (id: VirtualCardId): CardId
     (id: VirtualCardGroupId): CardGroupId
     (id: VirtualCardCycleId): CardCycleId
   } = (id: VirtualId): TrueId => this.trueIds[id.toString()]
+
+  virtualizeAction = (action: IAction): IVirtualAction => ({
+    ...action,
+    targets: action.targets.map((target:TrueId) => this.virtualizeId(target)),
+  })
+}
+
+type actionType = `draw` | `destroy` | `discard` | `mill`
+
+interface IAction {
+  from: PlayerId
+  type: actionType
+  targets: TrueId[]
+}
+
+interface IVirtualAction extends IAction {
+  targets: VirtualId[]
 }
