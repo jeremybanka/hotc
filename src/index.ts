@@ -1,6 +1,6 @@
 import socketAuth from 'socketio-auth'
 import { io } from "./server"
-import { getState, setState, addPlayer } from "./store"
+import { getState, setState, addPlayer } from "./store/game"
 
 io.on(`connection`, socket => {
   console.log(`connect: ${socket.id}`)
@@ -32,8 +32,8 @@ async function verifyUser(token) {
         const users = [
           {
             id: 1,
-            name: `mariotacke`,
-            token: `secret token`,
+            name: `jeremy`,
+            token: `banka`,
           },
         ]
         const user = users.find(user => user.token === token)
@@ -49,6 +49,7 @@ async function verifyUser(token) {
 /* eslint-enable max-len */
 socketAuth(io, {
   authenticate: async (socket, data, callback) => {
+    console.log(data)
     const { token } = data
 
     try {
@@ -63,15 +64,14 @@ socketAuth(io, {
     }
   },
   postAuthenticate: socket => {
-    console.log(`Socket ${socket.id} authenticated.`)
+    console.log(`Socket ${socket.id} authenticated as ${socket.user.name}.`)
+    addPlayer(socket.user.name)
+    console.log(getState().players)
   },
   disconnect: socket => {
     console.log(`Socket ${socket.id} disconnected.`)
   },
 })
-
-addPlayer()
-console.log(getState())
 
 // setInterval(() => {
 //   addPlayer()
