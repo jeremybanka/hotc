@@ -1,7 +1,7 @@
 import create from 'zustand/vanilla'
 import produce from 'immer'
-import { IAction, PlayerId } from './models/global/util/Id'
-import Player from './models/global/Player'
+import { IAction, PlayerId } from '../models/global/util/Id'
+import Player from '../models/global/Player'
 
 interface GameSession {
   setState: CallableFunction
@@ -14,7 +14,7 @@ interface GameSession {
 
 const createGame = () => create<GameSession>(set => ({
   setState: fn => set(produce(fn)),
-  addPlayer: displayName => {
+  addPlayer: (displayName:string) => {
     const newPlayer = new Player(displayName)
     setState(state => {
       state.players = state.players.set(newPlayer.id, newPlayer)
