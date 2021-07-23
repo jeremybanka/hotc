@@ -15,10 +15,11 @@ Server for [Topdeck](https://github.com/jeremybanka/topdeck)
 
 ## Description
 
-Host a rich multiuser card gaming simulation for several react web clients.
+Host a rich multiuser card gaming simulation between several react web clients.
 
 ### Minimum Viable Product
 
+- Play *Hearts* together online.
 - Server holds game state as source of truth.
 - Client presents the game visually from your perspective.
 - Secrecy. No peeking at other players’ cards, or attempts to track the state of play by remembering ids. (information comes from the server fully redacted of private/hidden state).
