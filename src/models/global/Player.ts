@@ -1,30 +1,56 @@
-import { IAction, IRequest, PlayerId, Spectator } from "./util/Id"
+import {
+  IActionRequest,
+  IVirtualActionRequest,
+  IVirtualImperative,
+} from "./Action"
+import Card from "./Card"
+import CardCycle from "./CardCycle"
+import CardGroup, { Hand } from "./CardGroup"
+import {
+  PlayerId,
+} from "./util/Id"
+import Portal from "./util/Portal"
 
-export default class PlayerServer extends Spectator {
+export default class Player extends Portal {
   id: PlayerId
 
   displayName: string
 
-  // hand: Card[]
+  hands: Hand[]
 
-  // deck: ICard[]
+  inbox: (Card|CardGroup)[]
 
-  // discardPile: ICard[]
+  userId: number
 
-  constructor(displayName: string) {
+  cardCyclesById: Record<string, CardCycle>
+
+  imperativeLog: IVirtualImperative[]
+
+  constructor(displayName:string, userId:number) {
     super()
     this.id = new PlayerId()
+    this.hands = []
+    this.inbox = []
     this.displayName = displayName
+    this.userId = userId
+    this.cardCyclesById = {}
+    this.imperativeLog = []
     // this.hand = []
     // this.deck = []
     // discardPile = []
   }
 
-  requestAction = (request: IRequest): IAction => ({
+  devirtualizeRequest
+  = (request: IVirtualActionRequest)
+  : IActionRequest => ({
     from: this.id,
     type: request.type,
     targets: this.devirtualizeIds(request.targets),
   })
+
+  receive = (card:Card): void => {
+    if (card.ownerId?.toString() === this.id.toString()) console.log(`bingo`)
+  }
 }
 
 /*

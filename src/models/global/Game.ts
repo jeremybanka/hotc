@@ -22,23 +22,23 @@ interface GameState {
   }
 }
 
-export default class Game {
-  id: GameId
+// export default class Game {
+//   id: GameId
 
-  startingStateSnapshot: GameState
+//   startingStateSnapshot: GameState
 
-  state: GameState
+//   state: GameState
 
-  players: Record<string, Player>
+//   players: Record<string, Player>
 
-  constructor() {
-    this.id = new GameId()
-    this.players = {}
-    this.state = {
-      turnOrder: [],
-    }
-    this.startingStateSnapshot = {
-      players: new Map(), turnOrder: [],
-    }
-  }
-}
+//   constructor() {
+//     this.id = new GameId()
+//     this.players = {}
+//     this.state = {
+//       turnOrder: [],
+//     }
+//     this.startingStateSnapshot = {
+//       players: new Map(), turnOrder: [],
+//     }
+//   }
+// }

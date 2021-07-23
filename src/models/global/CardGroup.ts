@@ -1,15 +1,15 @@
 import { immerable } from "immer"
-import { a } from "../../../../eny/src"
-import UUID from "./util/Id"
+import { a } from "eny/build/node"
+import { CardGroupId, PlayerId } from "./util/Id"
 import Card from "./Card"
 import { privacy } from "./types"
 
 const { shuffle } = a
 
-interface ICardGroupProps {
+export interface ICardGroupProps {
   id?: string
   cards: Card[]
-  ownedBy: string | null
+  ownedBy: PlayerId | null
   rotated: 0
 }
 
@@ -26,9 +26,9 @@ export default class CardGroup {
 
   class: string
 
-  id: UUID
+  id: CardGroupId
 
-  ownedBy: string | null
+  ownedBy: PlayerId | null
 
   privacy: privacy
 
@@ -40,7 +40,7 @@ export default class CardGroup {
     ownedBy = null,
     rotated = 0,
   }: ICardGroupProps = CardGroupDefaults) {
-    this.id = new UUID(id)
+    this.id = new CardGroupId(id)
     this.class = `CardGroup`
     this.cards = cards
     this.privacy = `public`
@@ -62,5 +62,17 @@ export class Deck extends CardGroup {
 
   shuffle = (): void => (this.cards = shuffle(this.cards))
 
-  draw = (): Card | undefined => this.cards.shift()
+  draw = (): Card => {
+    const drawnCard = this.cards.shift()
+    if (!drawnCard) throw new Error(`deck is empty`)
+    return drawnCard
+  }
+}
+
+export class Hand extends CardGroup {
+  constructor(props:ICardGroupProps) {
+    super(props)
+    this.class = `Hand`
+    this.privacy = `secret`
+  }
 }

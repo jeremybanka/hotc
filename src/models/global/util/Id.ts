@@ -22,40 +22,51 @@ export class TrueId extends Id {}
 export class VirtualId extends Id { isVirtual = true }
 export class AnonId extends VirtualId { isAnon = true }
 
-export class GameId extends Id { of = `Game` }
-export class PlayerId extends Id { of = `Player` }
-
 export class CardId extends TrueId { of = `Card` }
 export class CardGroupId extends TrueId { of = `CardGroup` }
 export class CardCycleId extends TrueId { of = `CardCycle` }
+export class GameId extends TrueId { of = `Game` }
+export class PlayerId extends TrueId { of = `Player` }
+export class ZoneId extends TrueId { of = `Zone` }
+export class ZoneLayoutId extends TrueId { of = `ZoneLayout` }
 
 export class VirtualCardId extends VirtualId { of = `Card` }
 export class VirtualCardGroupId extends VirtualId { of = `CardGroup` }
 export class VirtualCardCycleId extends VirtualId { of = `CardCycle` }
+export class VirtualGameId extends VirtualId { of = `Game` }
+export class VirtualPlayerId extends VirtualId { of = `Player` }
+export class VirtualZoneId extends VirtualId { of = `Zone` }
+export class VirtualZoneLayoutId extends VirtualId { of = `ZoneLayout` }
 
 export class AnonCardId extends AnonId { of = `Card` }
 export class AnonCardGroupId extends AnonId { of = `Card` }
 export class AnonCardCycleId extends AnonId { of = `Card` }
 
-const trueIdClassDict = {
+export const trueIdClassDict = {
   Card: CardId,
   CardCycle: CardCycleId,
   CardGroup: CardGroupId,
   Game: GameId,
   Player: PlayerId,
+  Zone: ZoneId,
+  ZoneLayout: ZoneLayoutId,
 }
-const virtualIdClassDict = {
+export const virtualIdClassDict = {
   Card: VirtualCardId,
   CardCycle: VirtualCardCycleId,
   CardGroup: VirtualCardGroupId,
+  Game: VirtualGameId,
+  Player: VirtualPlayerId,
+  Zone: VirtualZoneId,
+  ZoneLayout: VirtualZoneLayoutId,
 }
-const anonClassDict = {
+export const anonClassDict = {
   Card: AnonCardId,
   CardCycle: AnonCardGroupId,
   CardGroup: AnonCardCycleId,
 }
 
-interface preFrozenId {
+export interface IPreFrozenId {
   str: string
   of: string
   isVirtual: boolean
@@ -65,67 +76,15 @@ interface preFrozenId {
 export const freezeId = (id: Id): string => {
   const { of, isVirtual, isAnon } = id
   const str = id.toString()
-  const idObj: preFrozenId = { str, of, isVirtual, isAnon }
+  const idObj: IPreFrozenId = { str, of, isVirtual, isAnon }
   return JSON.stringify(idObj)
 }
 
 export const thawId = (frozenId: string): Id => {
-  const { str, of, isVirtual, isAnon }: preFrozenId = JSON.parse(frozenId)
+  const { str, of, isVirtual, isAnon }: IPreFrozenId = JSON.parse(frozenId)
   return isAnon
     ? new anonClassDict[of](str)
     : isVirtual
       ? new virtualIdClassDict[of](str)
       : new trueIdClassDict[of](str)
-}
-
-export class Spectator { // players[playerId].virtualize(trueId)
-  private virtualIds: Record<string, VirtualId>
-
-  private trueIds: Record<string, TrueId>
-
-  constructor() {
-    this.virtualIds = {}
-    this.trueIds = {}
-  }
-
-  virtualizeId: {
-    (id: CardId): VirtualCardId
-    (id: CardGroupId): VirtualCardGroupId
-    (id: CardCycleId): VirtualCardCycleId
-  } = (id: TrueId): VirtualId =>
-    this.virtualIds[id.toString()] || new anonClassDict[id.of](nanoid())
-
-  virtualizeIds = (reals: TrueId[]): VirtualId[] =>
-    reals.map((target:TrueId) => this.virtualizeId(target))
-
-  devirtualizeId: {
-    (id: VirtualCardId): CardId
-    (id: VirtualCardGroupId): CardGroupId
-    (id: VirtualCardCycleId): CardCycleId
-  } = (id: VirtualId): TrueId => this.trueIds[id.toString()]
-
-  devirtualizeIds = (virtuals: VirtualId[]): TrueId[] =>
-    virtuals.map(target => this.devirtualizeId(target))
-
-  virtualizeAction = (action: IAction): IVirtualAction => ({
-    ...action,
-    targets: this.devirtualizeIds(action.targets),
-  })
-}
-
-export type actionType = `draw` | `destroy` | `discard` | `mill`
-
-export interface IRequest {
-  targets: VirtualId[]
-  type: actionType
-}
-
-export interface IAction {
-  from: PlayerId
-  type: actionType
-  targets: TrueId[]
-}
-
-export interface IVirtualAction extends IAction {
-  targets: VirtualId[]
 }
