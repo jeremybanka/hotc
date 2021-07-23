@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jeremybanka/topdeck.git"
+    "url": "git+https://github.com/jeremybanka/hotc.git"
   },
   "keywords": [
     "cards",
@@ -56,7 +56,7 @@
     "webpack-node-externals": "^3.0.0"
   },
   "dependencies": {
-    "eny": "file:../eny",
+    "eny": "^0.0.6",
     "express": "^4.17.1",
     "immer": "^9.0.3",
     "lodash": "^4.17.21",
