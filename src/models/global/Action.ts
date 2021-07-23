@@ -23,6 +23,9 @@ import Zone from "./Zone"
 // infinite layouts can have a new zone appended at any time
 // finite layouts have a certain number of zones that are "filled"
 
+const DRAW = `DRAW`
+const CREATE_ZONE = `CREATE_ZONE`
+
 export type domain =
     `System`
   | `Deck`
@@ -30,12 +33,12 @@ export type domain =
 export type actionType =
     `contribute`
   | `createPlayer`
-  | `createZone`
+  | `CREATE_ZONE`
   | `createZoneLayout`
   | `destroy`
   | `deal`
   | `discard`
-  | `draw`
+  | `DRAW`
   | `mill`
   | `give`
   | `sort`
@@ -67,6 +70,7 @@ export const useCoreActions
 = (game:StoreApi<GameSession>)
 : Partial<Record<actionType, IAction>> => {
   const set = fn => game.setState(fn)
+  const get = () => game.getState()
   return ({
 
     createPlayer: {
@@ -82,22 +86,29 @@ export const useCoreActions
       },
     },
 
-    createZone: {
+    [CREATE_ZONE]: {
       domain: `System`,
       run: () => {
-        set(state => {
-          console.log(`creating Zone...`)
-          const newZone = new Zone()
-          const newZonesById = {
-            ...state.zonesById,
-            [newZone.id.toString()]: newZone,
-          }
-          state.zonesById = newZonesById
-        })
+        const { zonesById } = get()
+        const newZone = new Zone()
+        const newZonesById = {
+          ...zonesById,
+          [newZone.id.toString()]: newZone,
+        }
+        return [`zonesById`, newZonesById]
+        // set(state => {
+        //   const newZone = new Zone()
+        //   console.log(newZone)
+        //   const newZonesById = {
+        //     ...state.zonesById,
+        //     [newZone.id.toString()]: newZone,
+        //   }
+        //   state.zonesById = newZonesById
+        // })
       },
     },
 
-    draw: {
+    [DRAW]: {
       domain: `Deck`,
       run: (
         playerId:string,

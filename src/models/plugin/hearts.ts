@@ -1,13 +1,7 @@
 import produce from "immer"
 import { StoreApi } from "zustand/vanilla"
 import { GameSession } from "../../store/game"
-import { Deck } from "../global"
-import {
-  actionType,
-  CardCycleId,
-  CardGroupId,
-  PlayerId,
-} from "../global/util/Id"
+import { IAction } from "../global/Action"
 
 // actions
 // [s] shuffle deck
@@ -27,33 +21,22 @@ import {
 // infinite layouts can have a new zone appended at any time
 // finite layouts have a certain number of zones that are "filled"
 
-const buildActions
-= (game:StoreApi<GameSession>)
-: Record<string, {methodOf: string, run: CallableFunction}> => {
+const useHeartsActions
+= (
+  game:StoreApi<GameSession>,
+  coreActions:Record<string, IAction>)
+: Record<string, IAction> => {
   const set = fn => game.setState(produce(fn))
-  const get = game.getState()
+  const { dispatch } = game.getState()
+  const { createDeck } = coreActions
+
   return {
 
-    draw: {
-      methodOf: `Deck`,
-      run: (
-        actor:PlayerId,
-        targetId:CardGroupId,
-      ) => {
-        set((state:GameSession) => {
-          if (!targetId) throw new Error(`no id passed`)
-          const target = state.cardGroupsById.get(targetId)
-          if (!(target instanceof Deck)) {
-            throw new Error(`draw only targets decks`)
-          }
-          const drawnCard = target.draw()
-        })
+    init: {
+      domain: `System`,
+      run: () => {
+        dispatch(createDeck)
       },
-    },
-
-    deal: {
-      methodOf: `Deck`,
-      run: () => {},
     },
 
   }
@@ -63,7 +46,7 @@ const hearts = {
   name: `Hearts`,
   description:
     `The classic trick-taking game where points are bad...until they're not!`,
-  buildActions,
+  useHeartsActions,
 }
 
-export default hearts
+export default useHeartsActions

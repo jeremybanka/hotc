@@ -1,22 +1,43 @@
 import socketAuth from 'socketio-auth'
+import installCoreActions, {
+  IVirtualActionRequest,
+  IVirtualImperative,
+} from './models/global/Action'
+import Player from './models/global/Player'
+import { PlayerId } from './models/global/util/Id'
 import { io } from "./server"
-import { getState, setState, addPlayer } from "./store/game"
+import createGame from "./store/game"
+
+const game = createGame()
+
+const g = () => game.getState()
+
+installCoreActions(game)
 
 io.on(`connection`, socket => {
   console.log(`connect: ${socket.id}`)
 
+  game.subscribe(
+    (state:Player) => socket.emit(`message`, state.imperativeLog),
+    state => state.playersBySocketId[socket.id],
+    (prev, next) => {
+      console.log(`prev`, prev)
+      console.log(`next`, next)
+
+      return prev?.toString() === next?.toString()
+    }
+  )
+
   socket.on(`hello!`, data => {
-    console.log(`${data} from ${socket.id}`)
+    console.log(data)
   })
 
-  socket.on(`mouse`, data => {
-    setState(state => { state.tick++ })
-    const position = JSON.parse(data).passivePosition
-    socket.broadcast.emit(`mouse`, position)
-    console.log(position)
+  socket.on(`actionRequest`, (virtualActionRequest:IVirtualActionRequest) => {
+    const player = g().getSocketOwner(socket.id)
+    const actionRequest = player.devirtualizeRequest(virtualActionRequest)
+    console.log(`request`, actionRequest)
+    g().dispatch(actionRequest)
   })
-
-  socket.on(`action`, data => undefined)
 
   socket.on(`disconnect`, () => {
     console.log(`disconnect: ${socket.id}`)
@@ -59,22 +80,21 @@ socketAuth(io, {
 
       return callback(null, true)
     } catch (e) {
+      console.log(e)
       console.log(`Socket ${socket.id} unauthorized.`)
       return callback({ message: `UNAUTHORIZED` })
     }
   },
   postAuthenticate: socket => {
     console.log(`Socket ${socket.id} authenticated as ${socket.user.name}.`)
-    addPlayer(socket.user.name)
-    console.log(getState().players)
+    g().onPlayerJoin(socket.user.id, socket.id)
+    socket.player = g().playersBySocketId[socket.id]
+
+    console.log(`idConfirmed`)
+
+    // game.playersBySocketId.forEach(logIdMap)
   },
   disconnect: socket => {
     console.log(`Socket ${socket.id} disconnected.`)
   },
 })
-
-// setInterval(() => {
-//   addPlayer()
-//   console.log(getState())
-//   setState(state => { state.tick = 0 })
-// }, 4000)

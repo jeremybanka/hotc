@@ -1,5 +1,5 @@
 import installCoreActions from "../src/models/global/Action"
-import { createGame } from "../src/store/game"
+import createGame from "../src/store/game"
 
 describe(`game/coreActions`, () => {
   it(`can create a player`, () => {

@@ -13,7 +13,7 @@ import ZoneLayout from '../models/global/ZoneLayout'
 
 export interface GameSession {
   id: GameId
-  set: CallableFunction
+  // set: CallableFunction
   forEachPlayer: CallableFunction
   actions: Record<string, IAction>
   actionLog: IActionRequest[]
@@ -32,11 +32,11 @@ export interface GameSession {
   zoneLayoutsById: Record<string, ZoneLayout>
 }
 
-export const createGame
+const createGame
 = ()
 : StoreApi<GameSession> => create<GameSession>((set, get) =>
   ({
-    set: fn => set(produce(fn)),
+    // set: fn => set(produce(fn)),
     id: new GameId(),
     actions: {},
     actionLog: [],
@@ -88,29 +88,29 @@ export const createGame
     },
 
     dispatch: (actionReq:IActionRequest): void => {
-      // console.log(actionReq)
       const { type, targets = [], systemArgs } = actionReq
+      console.log(`received action: ${type} [${targets}]`)
       const action = get().actions[type]
       try {
         // if (!(type && from)) throw new Error(`fuk u`)
-        action.run({ targets, systemArgs })
+        const data = action.run({ targets, systemArgs })
+        console.log(data)
+        set(state => {
+          state[data[0]] = data[1]
+          state.actionLog.push(actionReq)
+          state.forEachPlayer((player:Player) => {
+            const imperative = player.virtualizeRequest(actionReq)
+            player.imperativeLog.push(imperative)
+          })
+        })
       } catch (error) {
         console.log(error)
         return error
       }
       // 'console.log(`validated...`)
-      set(state => {
-        state.actionLog.push(actionReq)
-      })
-      set(state => state.forEachPlayer((player:Player) => {
-        const imperative = player.virtualizeRequest(actionReq)
-        player.imperativeLog.push(imperative)
-      }))
     },
 
   })
 )
 
-export const gameCore = createGame()
-
-export default gameCore.getState()
+export default createGame
