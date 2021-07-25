@@ -95,7 +95,7 @@ export const useCoreActions
           ...zonesById,
           [newZone.id.toString()]: newZone,
         }
-        return [`zonesById`, newZonesById]
+        return { slice: `zonesById`, data: newZonesById }
         // set(state => {
         //   const newZone = new Zone()
         //   console.log(newZone)

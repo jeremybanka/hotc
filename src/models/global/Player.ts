@@ -1,3 +1,4 @@
+import { immerable } from "immer"
 import {
   IActionRequest,
   IVirtualActionRequest,
@@ -12,6 +13,8 @@ import {
 import Portal from "./util/Portal"
 
 export default class Player extends Portal {
+  [immerable] = true
+
   id: PlayerId
 
   displayName: string

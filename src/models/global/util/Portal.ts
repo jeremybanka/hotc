@@ -44,7 +44,7 @@ export default class Portal { // players[playerId].virtualize(trueId)
   devirtualizeIds = (virtuals: Id.VirtualId[] = []): Id.TrueId[] =>
     virtuals.map(target => this.devirtualizeId(target))
 
-  virtualizeRequest = (action: IActionRequest): IVirtualImperative => ({
+  deriveImperative = (action: IActionRequest): IVirtualImperative => ({
     ...action,
     targets: this.virtualizeIds(action.targets = []),
   })

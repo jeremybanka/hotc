@@ -6,7 +6,7 @@ import installCoreActions, {
 import Player from './models/global/Player'
 import { PlayerId } from './models/global/util/Id'
 import { io } from "./server"
-import createGame from "./store/game"
+import createGame, { GameSession } from "./store/game"
 
 const game = createGame()
 
@@ -18,14 +18,17 @@ io.on(`connection`, socket => {
   console.log(`connect: ${socket.id}`)
 
   game.subscribe(
-    (state:Player) => socket.emit(`message`, state.imperativeLog),
-    state => state.playersBySocketId[socket.id],
+    (state:IVirtualImperative[]) => socket.emit(`message`, state),
+    state =>
+      state.playersById[state.playerIdsBySocketId[socket.id]]?.imperativeLog,
     (prev, next) => {
-      console.log(`prev`, prev)
-      console.log(`next`, next)
-
-      return prev?.toString() === next?.toString()
+      console.log(`prev`, prev?.length)
+      console.log(`next`, next?.length)
+      const isEqual = prev?.length === next?.length
+      // console.log(`isEqual?`, isEqual)
+      return isEqual
     }
+
   )
 
   socket.on(`hello!`, data => {
@@ -88,7 +91,7 @@ socketAuth(io, {
   postAuthenticate: socket => {
     console.log(`Socket ${socket.id} authenticated as ${socket.user.name}.`)
     g().onPlayerJoin(socket.user.id, socket.id)
-    socket.player = g().playersBySocketId[socket.id]
+    socket.playerId = g().playerIdsBySocketId[socket.id]
 
     console.log(`idConfirmed`)
 

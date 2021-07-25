@@ -26,17 +26,19 @@ export interface GameSession {
   cardCyclesById: Record<string, CardCycle>
   cardsById: Record<string, Card>
   playersById: Record<string, Player>
-  playersByUserId: Record<number, Player>
-  playersBySocketId: Record<string, Player>
+  playerIdsByUserId: Record<number, string>
+  playerIdsBySocketId: Record<string, string>
   zonesById: Record<string, Zone>
   zoneLayoutsById: Record<string, ZoneLayout>
 }
 
 const createGame
 = ()
-: StoreApi<GameSession> => create<GameSession>((set, get) =>
-  ({
-    // set: fn => set(produce(fn)),
+: StoreApi<GameSession> => create<GameSession>((set, get) => {
+  // const set = fn => setState(produce(fn))
+  console.log(set)
+  return ({
+    // set,
     id: new GameId(),
     actions: {},
     actionLog: [],
@@ -44,39 +46,45 @@ const createGame
     cardGroupsById: {},
     cardCyclesById: {},
     playersById: {},
-    playersByUserId: {},
-    playersBySocketId: {},
+    playerIdsByUserId: {},
+    playerIdsBySocketId: {},
     zonesById: {},
     zoneLayoutsById: {},
 
     registerSocket: (socketId:string) => ({
       to: (player:Player) => {
         set(state => {
-          state.playersBySocketId[socketId] = player
+          state.playerIdsBySocketId[socketId] = player.id.toString()
         })
       },
     }),
 
     onPlayerJoin: (userId:number, socketId:string) => {
       set(state => {
-        const player = state.playersByUserId[userId]
-        console.log(`playerIsAlreadyHere`, !!player)
-        if (player) {
-          state.playersBySocketId[socketId] = player
+        const playerId = state.playerIdsByUserId[userId]
+        console.log(`playerIsAlreadyHere`, !!playerId)
+        if (playerId) {
+          state.playerIdsBySocketId[socketId] = playerId
         } else {
           const newPlayer = new Player(`displayName`, userId)
-          state.playersByUserId[userId] = newPlayer
-          state.playersBySocketId[socketId] = newPlayer
+          const playerId = newPlayer.id.toString()
+          state.playerIdsByUserId[userId] = playerId
+          state.playerIdsBySocketId[socketId] = playerId
           state.playersById[newPlayer.id.toString()] = newPlayer
         }
       })
     },
 
-    getSocketOwner: (socketId:string) => get().playersBySocketId[socketId],
+    getSocketOwner: (socketId:string) =>
+      get().playersById[get().playerIdsBySocketId[socketId]],
 
     getPlayers: () => Object.values(get().playersById),
 
-    forEachPlayer: (fn:CallableFunction): void => get().getPlayers().forEach(fn),
+    forEachPlayer: (fn:CallableFunction): void => {
+      get().getPlayers().forEach(player => {
+        produce(player, (draft:Player) => fn(draft))
+      })
+    },
 
     install: (installer:CallableFunction): void => {
       set(state => {
@@ -93,15 +101,36 @@ const createGame
       const action = get().actions[type]
       try {
         // if (!(type && from)) throw new Error(`fuk u`)
-        const data = action.run({ targets, systemArgs })
-        console.log(data)
-        set(state => {
-          state[data[0]] = data[1]
+        const response = action.run({ targets, systemArgs })
+        console.log(response)
+        set((state:GameSession) => {
+          state[response.slice] = response.data
           state.actionLog.push(actionReq)
-          state.forEachPlayer((player:Player) => {
-            const imperative = player.virtualizeRequest(actionReq)
-            player.imperativeLog.push(imperative)
-          })
+          // console.log(`ACTION LOG`, state.actionLog)
+          const newPlayersById = { ...state.playersById }
+          const newPlayers = Object.values(newPlayersById)
+          for (let index = 0; index < newPlayers.length; index++) {
+            const player = newPlayers[index]
+            const newPlayer = produce(player, draft => {
+              const imperative = draft.deriveImperative(actionReq)
+              console.log(`imperative`, imperative)
+              draft.imperativeLog.push(imperative)
+              // console.log(`player`, draft)
+            })
+            console.log(`newPlayer`, newPlayer)
+            newPlayersById[player.id.toString()] = newPlayer
+          }
+          state.playersById = newPlayersById
+          console.log(`state`, state)
+
+          // const newPlayers = { ...state.getPlayers() }
+          // for (let index = 0; index < newPlayers.length; index++) {
+          //   const player = newPlayers[index]
+          //   const imperative = player.virtualizeRequest(actionReq)
+          //   console.log(`imperative for player ${player.id}`, imperative)
+          //   player.imperativeLog = [...player.imperativeLog, imperative]
+          // }
+          // state.players = newPlayers
         })
       } catch (error) {
         console.log(error)
@@ -111,6 +140,6 @@ const createGame
     },
 
   })
-)
+})
 
 export default createGame
