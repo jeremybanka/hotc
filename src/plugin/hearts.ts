@@ -22,21 +22,14 @@ import { IAction } from "../core/actions/types"
 // finite layouts have a certain number of zones that are "filled"
 
 const useHeartsActions
-= (
-  game:StoreApi<GameSession>,
-  coreActions:Record<string, IAction>)
+= (game:StoreApi<GameSession>)
 : Record<string, IAction> => {
   const set = fn => game.setState(produce(fn))
-  const { dispatch } = game.getState()
-  const { createDeck } = coreActions
 
   return {
-
     init: {
       domain: `System`,
-      run: () => {
-        dispatch(createDeck)
-      },
+      run: () => ({ }),
     },
 
   }

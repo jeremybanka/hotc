@@ -1,4 +1,4 @@
-import { Deck } from "../global"
+import { Deck } from "../core/models"
 
 export default class Deck52 extends Deck {
   // constructor() {
