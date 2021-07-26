@@ -1,7 +1,7 @@
 import { immerable } from "immer"
-import Zone from "./Zone"
+import { Zone } from "."
 
-export default class ZoneLayout {
+export class ZoneLayout {
   [immerable] = true
 
   id: string

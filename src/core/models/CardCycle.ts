@@ -1,6 +1,6 @@
-import { CardCycleId, CardGroupId } from "./util/Id"
+import { CardCycleId, CardGroupId } from "../util/Id"
 
-export default class CardCycle {
+export class CardCycle {
  id:CardCycleId
 
  cardGroupIds: CardGroupId[]

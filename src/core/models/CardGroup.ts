@@ -1,34 +1,33 @@
 import { immerable } from "immer"
 import { a } from "eny/build/node"
-import { CardGroupId, PlayerId } from "./util/Id"
-import Card from "./Card"
+import { CardGroupId, CardId, PlayerId } from "../util/Id"
 import { privacy } from "./types"
 
 const { shuffle } = a
 
 export interface ICardGroupProps {
   id?: string
-  cards: Card[]
-  ownedBy: PlayerId | null
+  cards: CardId[]
+  ownerId: PlayerId | null
   rotated: 0
 }
 
 const CardGroupDefaults: ICardGroupProps = {
   cards: [],
-  ownedBy: null,
+  ownerId: null,
   rotated: 0,
 }
 
-export default class CardGroup {
+export class CardGroup {
   [immerable] = true
 
-  cards: Card[]
+  cards: CardId[]
 
   class: string
 
   id: CardGroupId
 
-  ownedBy: PlayerId | null
+  ownerId: PlayerId | null
 
   privacy: privacy
 
@@ -37,18 +36,18 @@ export default class CardGroup {
   constructor({
     id,
     cards = [],
-    ownedBy = null,
+    ownerId = null,
     rotated = 0,
   }: ICardGroupProps = CardGroupDefaults) {
     this.id = new CardGroupId(id)
     this.class = `CardGroup`
     this.cards = cards
     this.privacy = `public`
-    this.ownedBy = ownedBy
+    this.ownerId = ownerId
     this.rotated = rotated
   }
 
-  add(newCard: Card, idx = 0): void {
+  add(newCard: CardId, idx = 0): void {
     this.cards.splice(idx, 0, newCard)
   }
 }
@@ -62,7 +61,7 @@ export class Deck extends CardGroup {
 
   shuffle = (): void => (this.cards = shuffle(this.cards))
 
-  draw = (): Card => {
+  draw = (): CardId => {
     const drawnCard = this.cards.shift()
     if (!drawnCard) throw new Error(`deck is empty`)
     return drawnCard

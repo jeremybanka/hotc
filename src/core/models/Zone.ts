@@ -1,9 +1,8 @@
 import { immerable } from "immer"
-import Card from "./Card"
-import CardGroup from "./CardGroup"
-import { ZoneId } from "./util/Id"
+import { Card, CardGroup } from "."
+import { ZoneId } from "../util/Id"
 
-export default class Zone {
+export class Zone {
   [immerable] = true
 
   id: ZoneId

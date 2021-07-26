@@ -1,21 +1,28 @@
-import { CardCycleId, CardId } from "./util/Id"
+import { CardCycleId, CardId, CardValueId, PlayerId } from "../util/Id"
 import { privacy } from "./types"
 
-export default class Card {
+export class Card {
   id: CardId
+
+  valueId: CardValueId
 
   cycleId: CardCycleId | null
 
-  ownerId: string | null
+  ownerId: PlayerId | null
 
   privacy: privacy
 
   rotated: number
 
-  constructor() {
+  constructor(
+    valueId: CardValueId,
+    cycleId?: CardCycleId,
+    ownerId?: PlayerId
+  ) {
     this.id = new CardId()
-    this.cycleId = null
-    this.ownerId = null
+    this.valueId = valueId
+    this.cycleId = cycleId || null
+    this.ownerId = ownerId || null
     this.privacy = `public`
     this.rotated = 0
   }
