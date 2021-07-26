@@ -35,7 +35,7 @@ Host a rich multiuser card gaming simulation between several react web clients.
 
 - Working with React Mouse Position+Emotion to create a great right-click experience on the client.
 - Developing a robust hotkeys system on the client with React Hotkeys.
-- Maybe some kind of drag-and-drop system for 'picking up' cards in the client
+- Maybe some kind of drag-and-drop system for 'picking up' cards in the client
 - Add another similar game besides Five-Card draw, probably Texas Hold ‘Em.
 
 ## Setup/Installation Requirements
