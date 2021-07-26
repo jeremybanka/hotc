@@ -1,12 +1,11 @@
 import socketAuth from 'socketio-auth'
-import installCoreActions, {
+import installCoreActions from './core/actions'
+import {
   IVirtualActionRequest,
   IVirtualImperative,
-} from './models/global/Action'
-import Player from './models/global/Player'
-import { PlayerId } from './models/global/util/Id'
+} from './core/actions/types'
 import { io } from "./server"
-import createGame, { GameSession } from "./store/game"
+import createGame from "./store/game"
 
 const game = createGame()
 
@@ -43,7 +42,7 @@ io.on(`connection`, socket => {
   })
 
   socket.on(`disconnect`, () => {
-    console.log(`disconnect: ${socket.id}`)
+    console.log(`core disconnect: ${socket.id}`)
   })
 })
 
@@ -98,6 +97,6 @@ socketAuth(io, {
     // game.playersBySocketId.forEach(logIdMap)
   },
   disconnect: socket => {
-    console.log(`Socket ${socket.id} disconnected.`)
+    console.log(`auth disconnect: ${socket.id}.`)
   },
 })

@@ -2,14 +2,17 @@ import create, { StoreApi } from 'zustand/vanilla'
 import produce from 'immer'
 import {
   GameId,
-} from '../models/global/util/Id'
-import Player from '../models/global/Player'
-import CardGroup from '../models/global/CardGroup'
-import CardCycle from '../models/global/CardCycle'
-import { IAction, IActionRequest } from '../models/global/Action'
-import Card from '../models/global/Card'
-import Zone from '../models/global/Zone'
-import ZoneLayout from '../models/global/ZoneLayout'
+  TrueId,
+} from '../core/util/Id'
+import {
+  Card,
+  CardCycle,
+  CardGroup,
+  Player,
+  Zone,
+  ZoneLayout,
+} from "../core/models"
+import { IAction, IActionRequest } from '../core/actions/types'
 
 export interface GameSession {
   id: GameId
@@ -20,11 +23,12 @@ export interface GameSession {
   onPlayerJoin: CallableFunction
   getSocketOwner: CallableFunction
   getPlayers: CallableFunction
-  dispatch: CallableFunction
-  install: CallableFunction
-  cardGroupsById: Record<string, CardGroup>
-  cardCyclesById: Record<string, CardCycle>
+  dispatch(actionRequest:IActionRequest) : void
+  identify(id:TrueId) : unknown
   cardsById: Record<string, Card>
+  cardCyclesById: Record<string, CardCycle>
+  cardGroupsById: Record<string, CardGroup>
+  cardValuesById: Record<string, string>
   playersById: Record<string, Player>
   playerIdsByUserId: Record<number, string>
   playerIdsBySocketId: Record<string, string>
@@ -43,13 +47,28 @@ const createGame
     actions: {},
     actionLog: [],
     cardsById: {},
-    cardGroupsById: {},
     cardCyclesById: {},
+    cardGroupsById: {},
+    cardValuesById: {},
     playersById: {},
     playerIdsByUserId: {},
     playerIdsBySocketId: {},
     zonesById: {},
     zoneLayoutsById: {},
+
+    identify(id: TrueId) {
+      const idString = id.toString()
+      switch (id.of) {
+        case `Card`: return get().cardsById[idString]
+        case `CardCycle`: return get().cardCyclesById[idString]
+        case `CardGroup`: return get().cardGroupsById[idString]
+        case `CardValue`: return get().cardValuesById[idString]
+        case `Player`: return get().playersById[idString]
+        case `Zone`: return get().zonesById[idString]
+        case `ZoneLayout`: return get().zoneLayoutsById[idString]
+        default: throw new Error(`id of unknown entity`)
+      }
+    },
 
     registerSocket: (socketId:string) => ({
       to: (player:Player) => {
@@ -96,15 +115,15 @@ const createGame
     },
 
     dispatch: (actionReq:IActionRequest): void => {
-      const { type, targets = [], systemArgs } = actionReq
+      const { type, payload: { from, targets = [], systemArgs } } = actionReq
       console.log(`received action: ${type} [${targets}]`)
       const action = get().actions[type]
       try {
         // if (!(type && from)) throw new Error(`fuk u`)
-        const response = action.run({ targets, systemArgs })
+        const response = action.run({ from, targets, systemArgs })
         console.log(response)
         set((state:GameSession) => {
-          state[response.slice] = response.data
+          state = { ...state, ...response }
           state.actionLog.push(actionReq)
           // console.log(`ACTION LOG`, state.actionLog)
           const newPlayersById = { ...state.playersById }

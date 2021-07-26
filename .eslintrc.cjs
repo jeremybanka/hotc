@@ -43,6 +43,7 @@ module.exports = {
         tsx: `never`,
       },
     ],
+    "import/prefer-default-export": `off`,
     "jsx-quotes": [`error`, `prefer-double`],
     "keyword-spacing": [
       `error`,

@@ -4,7 +4,7 @@ import Id, {
   isNanoId,
   thawId,
   VirtualCardId,
-} from "../src/models/global/util/Id"
+} from "../src/core/util/Id"
 
 /* eslint-disable @typescript-eslint/ban-types */
 const areDeepSame = (
