@@ -1,21 +1,29 @@
 import produce from "immer"
 import { StoreApi } from "zustand/vanilla"
 import { GameSession } from "../../store/game"
-import { Card, CardGroup, Deck, Player, Zone } from "../models"
-import { CardGroupId, CardId, PlayerId } from "../util/Id"
-import ACTION, { actionType, IAction, ICoreActions } from "./types"
+import { Card, Deck, Hand, Player, Zone } from "../models"
+import {  CardGroupId } from "../util/Id"
+import  { actionType, IAction  } from "./types"
 
 export const useCoreActions
 = (game:StoreApi<GameSession>)
 : Record<actionType, IAction> => {
-  const set = fn => game.setState(fn)
+  // const set = fn => game.setState(fn)
   const get = () => game.getState()
   return ({
 
-    // CREATE_PLAYER: {
-    //   domain: `SYSTEM`,
-    //   run: () => undefined,
-    // },
+    CREATE_PLAYER: {
+      domain: `System`,
+      run: ({ options }) => {
+        const { userId, socketId } = options as {userId:number, socketId:string}
+        const newPlayer = new Player(`displayName`, userId)
+        const playerId = newPlayer.id.toString()
+        const playersById = { [playerId]: newPlayer }
+        const playerIdsByUserId = { [userId]: playerId }
+        get().registerSocket(socketId).to(newPlayer)
+        return { playersById, playerIdsByUserId }
+      },
+    },
 
     // ({ systemArgs }): => {
     //   const [userId, socketId] = systemArgs
@@ -27,13 +35,8 @@ export const useCoreActions
     //   })
     // }
 
-    WHATEVER: {
-      domain: ``,
-      run: () => undefined,
-    },
-
     CREATE_ZONE: {
-      domain: `SYSTEM`,
+      domain: `System`,
       run: () => {
         const newZone = new Zone()
         const zonesById = {
@@ -45,40 +48,50 @@ export const useCoreActions
     },
 
     DRAW: {
-      domain: `DECK`,
+      domain: `Deck`,
       run: ({ from, targets }) => {
         const { identify } = get()
         const [cardGroupId] = targets as [CardGroupId]
-        const actor = identify(from) as Player
+        const subject = identify(from) as Player
         const targetDeck = identify(cardGroupId) as Deck
-        if (!(actor && targetDeck)) throw new Error(``)
+        if (!subject) throw new Error(``)
+        if (!targetDeck) throw new Error(``)
         let cardId
-        const newDeck = produce(targetDeck, draft => { cardId = draft.draw() })
+        const newDeck = produce(targetDeck, deck => {
+          cardId = deck.draw()
+        })
         const card = identify(cardId) as Card
-        if (card.ownerId === actor.id) {
-
-        } 
+        const cardCycleId = card.cycleId
+        const handId = subject.cycleIdToHandIdMap.get(cardCycleId)
+        let newHand
+        let newSubject
+        if (handId) {
+          const hand = identify(handId) as Hand
+          newHand = produce(hand, draft => draft.add(cardId))
+        } else {
+          newHand = new Hand({ cards: [cardId], ownerId: subject.id })
+          newSubject = produce(subject, player => {
+            player.cycleIdToHandIdMap.set(cardCycleId, newHand.id)
+          })
+        }
+        const cardGroupsById = {
+          ...get().cardGroupsById,
+          [newDeck.id.toString()]: newDeck,
+          [newHand.id.toString()]: newHand,
+        }
+        if (!newSubject) return { cardGroupsById }
         const playersById = {
           ...get().playersById,
-          [actor.id.toString()]:  
+          [newSubject.id.toString()]: newSubject,
         }
-        return { playersById }
-        set(state => {
-          if (!cardGroupId) throw new Error(`no deck id passed`)
-          const deck = state.cardGroupsById[cardGroupId.toString()]
-          if (!(deck instanceof Deck)) throw new Error(`draw targets decks`)
-          const drawnCard = deck.draw()
-          if (!playerId) throw new Error(`no player id passed`)
-          const player = state.playersById[playerId.toString()]
-          player.receive(drawnCard)
-        })
+        return { cardGroupsById, playersById }
       },
     },
 
-    // DEAL: {
-    //   domain: `DECK`,
-    //   run: () => undefined,
-    // },
+    DEAL: {
+      domain: `Deck`,
+      run: () => undefined,
+    },
   })
 }
 

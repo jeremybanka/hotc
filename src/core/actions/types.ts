@@ -2,8 +2,8 @@ import { GameSession } from "../../store/game"
 import { PlayerId, TrueId, VirtualId } from "../util/Id"
 
 export type domainType =
-  |`SYSTEM`
-  |`DECK`
+  |`System`
+  |`Deck`
 
 export type actionType =
   |`CREATE_PLAYER`
@@ -21,7 +21,6 @@ export interface IActionRequestPayload {
   from: PlayerId
   targets: TrueId[]
   options?: Record<string, (number|string)>
-  systemArgs?: (number|string)[]
 }
 
 export interface IActionRequest {

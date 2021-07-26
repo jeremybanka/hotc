@@ -2,6 +2,7 @@ import create, { StoreApi } from 'zustand/vanilla'
 import produce from 'immer'
 import {
   GameId,
+  PlayerId,
   TrueId,
 } from '../core/util/Id'
 import {
@@ -32,6 +33,7 @@ export interface GameSession {
   playersById: Record<string, Player>
   playerIdsByUserId: Record<number, string>
   playerIdsBySocketId: Record<string, string>
+  registerSocket: (socketId:string) => {to: (player:Player) => void}
   zonesById: Record<string, Zone>
   zoneLayoutsById: Record<string, ZoneLayout>
 }
@@ -40,7 +42,7 @@ const createGame
 = ()
 : StoreApi<GameSession> => create<GameSession>((set, get) => {
   // const set = fn => setState(produce(fn))
-  console.log(set)
+  console.log(``)
   return ({
     // set,
     id: new GameId(),
@@ -78,6 +80,10 @@ const createGame
       },
     }),
 
+    // registerUserId: (userId:number) => ({
+    //   to
+    // }),
+
     onPlayerJoin: (userId:number, socketId:string) => {
       set(state => {
         const playerId = state.playerIdsByUserId[userId]
@@ -114,48 +120,34 @@ const createGame
       })
     },
 
-    dispatch: (actionReq:IActionRequest): void => {
-      const { type, payload: { from, targets = [], systemArgs } } = actionReq
-      console.log(`received action: ${type} [${targets}]`)
+    dispatch: (actionRequest:IActionRequest): void => {
+      const { type, payload } = actionRequest
+      const { from, targets = [], options } = payload
       const action = get().actions[type]
-      try {
-        // if (!(type && from)) throw new Error(`fuk u`)
-        const response = action.run({ from, targets, systemArgs })
-        console.log(response)
-        set((state:GameSession) => {
-          state = { ...state, ...response }
-          state.actionLog.push(actionReq)
-          // console.log(`ACTION LOG`, state.actionLog)
-          const newPlayersById = { ...state.playersById }
-          const newPlayers = Object.values(newPlayersById)
-          for (let index = 0; index < newPlayers.length; index++) {
-            const player = newPlayers[index]
-            const newPlayer = produce(player, draft => {
-              const imperative = draft.deriveImperative(actionReq)
-              console.log(`imperative`, imperative)
-              draft.imperativeLog.push(imperative)
-              // console.log(`player`, draft)
-            })
-            console.log(`newPlayer`, newPlayer)
-            newPlayersById[player.id.toString()] = newPlayer
-          }
-          state.playersById = newPlayersById
-          console.log(`state`, state)
 
-          // const newPlayers = { ...state.getPlayers() }
-          // for (let index = 0; index < newPlayers.length; index++) {
-          //   const player = newPlayers[index]
-          //   const imperative = player.virtualizeRequest(actionReq)
-          //   console.log(`imperative for player ${player.id}`, imperative)
-          //   player.imperativeLog = [...player.imperativeLog, imperative]
-          // }
-          // state.players = newPlayers
+      console.log(`action`, { ...payload, from: from.toString() })
+
+      try {
+        const update = action.run({ from, targets, options })
+        set((state:GameSession) => {
+          state = { ...state, ...update }
+          state.actionLog.push(actionRequest)
+          const newPlayersById = { ...state.playersById }
+          Object.values(newPlayersById).forEach(player => {
+            const newPlayer = produce(player, draft => {
+              const imperative = draft.deriveImperative(actionRequest)
+              draft.imperativeLog.push(imperative)
+            })
+            newPlayersById[player.id.toString()] = newPlayer
+          })
+          state.playersById = newPlayersById
+          return state
         })
       } catch (error) {
         console.log(error)
         return error
       }
-      // 'console.log(`validated...`)
+      console.log(`validated...`, get())
     },
 
   })

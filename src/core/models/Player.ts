@@ -5,19 +5,26 @@ import {
   IVirtualActionRequest,
   IVirtualImperative,
 } from "../actions/types"
-import { Card, CardCycle, CardGroup, Hand } from "."
+import { Card, CardCycle, CardGroup } from "."
 import {
   PlayerId,
+  CardGroupId,
+  TrueId,
+  VirtualId,
+  CardId,
+  VirtualCardId,
+  VirtualCardGroupId,
+  VirtualCardCycleId,
+  CardCycleId,
+  anonClassDict,
 } from "../util/Id"
-
-import * as Id from "../util/Id"
 
 export class Perspective { // players[playerId].virtualize(trueId)
   [immerable] = true
 
-  private virtualIds: Record<string, Id.VirtualId>
+  private virtualIds: Record<string, VirtualId>
 
-  private trueIds: Record<string, Id.TrueId>
+  private trueIds: Record<string, TrueId>
 
   virtualActionLog: IVirtualActionRequest[]
 
@@ -28,25 +35,25 @@ export class Perspective { // players[playerId].virtualize(trueId)
   }
 
   virtualizeId: {
-    (id: Id.CardId): Id.VirtualCardId
-    (id: Id.CardGroupId): Id.VirtualCardGroupId
-    (id: Id.CardCycleId): Id.VirtualCardCycleId
-  } = (id: Id.TrueId): Id.VirtualId => {
+    (id: CardId): VirtualCardId
+    (id: CardGroupId): VirtualCardGroupId
+    (id: CardCycleId): VirtualCardCycleId
+  } = (id: TrueId): VirtualId => {
     console.log(id)
     return this.virtualIds[id.toString()]
-    || new Id.anonClassDict[id.of](nanoid())
+    || new anonClassDict[id.of](nanoid())
   }
 
-  virtualizeIds = (reals: Id.TrueId[]): Id.VirtualId[] =>
-    reals.map((target:Id.TrueId) => this.virtualizeId(target))
+  virtualizeIds = (reals: TrueId[]): VirtualId[] =>
+    reals.map((target:TrueId) => this.virtualizeId(target))
 
   devirtualizeId: {
-    (id: Id.VirtualCardId): Id.CardId
-    (id: Id.VirtualCardGroupId): Id.CardGroupId
-    (id: Id.VirtualCardCycleId): Id.CardCycleId
-  } = (id: Id.VirtualId): Id.TrueId => this.trueIds[id.toString()]
+    (id: VirtualCardId): CardId
+    (id: VirtualCardGroupId): CardGroupId
+    (id: VirtualCardCycleId): CardCycleId
+  } = (id: VirtualId): TrueId => this.trueIds[id.toString()]
 
-  devirtualizeIds = (virtuals: Id.VirtualId[] = []): Id.TrueId[] =>
+  devirtualizeIds = (virtuals: VirtualId[] = []): TrueId[] =>
     virtuals.map(target => this.devirtualizeId(target))
 
   deriveImperative = (action: IActionRequest): IVirtualImperative => ({
@@ -55,7 +62,7 @@ export class Perspective { // players[playerId].virtualize(trueId)
     targets: this.virtualizeIds(action.payload.targets = []),
   })
 
-  unlink = (trueId:Id.TrueId): void => {
+  unlink = (trueId:TrueId): void => {
     const trueIdString = trueId.toString()
     const virtualIdString = this.virtualizeId(trueId).toString()
     delete this.trueIds[trueIdString]
@@ -70,9 +77,9 @@ export class Player extends Perspective {
 
   displayName: string
 
-  hands: Hand[]
+  cycleIdToHandIdMap: Map<(null|CardCycleId), CardGroupId>
 
-  inbox: (Card|CardGroup)[]
+  inbox: (CardId|CardGroupId)[]
 
   userId: number
 
@@ -83,7 +90,7 @@ export class Player extends Perspective {
   constructor(displayName:string, userId:number) {
     super()
     this.id = new PlayerId()
-    this.hands = []
+    this.cycleIdToHandIdMap = new Map()
     this.inbox = []
     this.displayName = displayName
     this.userId = userId

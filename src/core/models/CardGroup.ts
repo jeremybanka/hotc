@@ -7,9 +7,9 @@ const { shuffle } = a
 
 export interface ICardGroupProps {
   id?: string
-  cards: CardId[]
-  ownerId: PlayerId | null
-  rotated: 0
+  cards?: CardId[]
+  ownerId?: PlayerId | null
+  rotated?: 0
 }
 
 const CardGroupDefaults: ICardGroupProps = {
@@ -38,7 +38,7 @@ export class CardGroup {
     cards = [],
     ownerId = null,
     rotated = 0,
-  }: ICardGroupProps = CardGroupDefaults) {
+  }:ICardGroupProps) {
     this.id = new CardGroupId(id)
     this.class = `CardGroup`
     this.cards = cards
