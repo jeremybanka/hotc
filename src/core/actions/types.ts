@@ -7,14 +7,14 @@ export type domainType =
 
 export type actionType =
   | `CLEAR_TABLE`
-  | `CREATE_CARDCYCLE`
+  | `CREATE_CARD_CYCLE`
   | `CREATE_DECK`
   | `CREATE_HAND`
   | `CREATE_PLAYER`
   | `CREATE_TAKE`
   | `CREATE_TRICK`
   | `CREATE_ZONE`
-  | `CREATE_ZONELAYOUT`
+  | `CREATE_ZONE_LAYOUT`
   | `DEAL`
   | `DRAW`
   | `LOAD`
@@ -34,7 +34,7 @@ export interface IVirtualActionRequest {
 export interface IActionRequestPayload {
   subjectId?: PlayerId
   targets?: RealTargets
-  options?: Record<string, (number|string)>
+  options?: Record<string, any>
 }
 
 export interface IActionRequest {

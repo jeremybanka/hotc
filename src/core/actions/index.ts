@@ -1,9 +1,26 @@
 import produce from "immer"
 import { StoreApi } from "zustand/vanilla"
 import { GameSession } from "../../store/game"
-import { Card, Deck, Hand, Player, Zone, ZoneLayout } from "../models"
-import {  CardGroupId, CardValueId } from "../util/Id"
-import  { actionType, IAction  } from "./types"
+import {
+  Card,
+  CardCycle,
+  CardValue,
+  Deck,
+  Hand,
+  Player,
+  Zone,
+  ZoneLayout,
+} from "../models"
+import {
+  CardGroupId,
+  CardValueId,
+  PlayerId,
+  TrueId,
+  ZoneId,
+  ZoneLayoutId,
+} from "../util/Id"
+import mapObject from "../util/mapObject"
+import  { actionType, IAction, RealTargets  } from "./types"
 
 export const useCoreActions
 = (game:StoreApi<GameSession>)
@@ -14,12 +31,59 @@ export const useCoreActions
 
     CLEAR_TABLE: {
       domain: `System`,
-      run: () => ({}),
+      run: () => {
+        const clearPlayer = (player:Player): Player =>
+          produce(player, draft => {
+            draft.cycleIdToHandIdMap = new Map()
+            draft.inbox = []
+          })
+        const playersById = mapObject(get().playersById, clearPlayer)
+        return {
+          cardsById: {},
+          cardCyclesById: {},
+          cardGroupsById: {},
+          playersById,
+          zonesById: {},
+          zoneLayoutsById: {},
+        }
+      },
     },
 
-    CREATE_CARDCYCLE: {
+    CREATE_CARD_CYCLE: {
       domain: `System`,
-      run: () => ({}),
+      run: ({ targets, options }) => {
+        if (!(targets && options)) throw new Error(`invalid call`)
+        const realTargets = targets as RealTargets
+        const { phaseNames } = options as {phaseNames: (keyof RealTargets)[]}
+        const phases = phaseNames.map(phaseName => {
+          const phase = realTargets[phaseName]
+          if (!phase) throw new Error(`invalid call`)
+          if (Array.isArray(phase)) {
+            const phaseProtoMap = phase.map((id:TrueId) => {
+              if (id instanceof PlayerId) {
+                const hand = new Hand({})
+                return [id, hand.id] as [PlayerId, CardGroupId]
+              } else if (id instanceof ZoneId) {
+                const zone = get().identify(id) as Zone<any>
+                if (zone.ownerId instanceof PlayerId) {
+                  return [zone.ownerId, id] as [PlayerId, ZoneId]
+                }
+                throw new Error(`zone has no owner`)
+              } else { throw new Error(`invalid phase array`) }
+            })
+            return new Map(phaseProtoMap)
+          }
+          if (phase instanceof CardGroupId) return phase
+          if (phase instanceof ZoneId) return phase
+          throw new Error(`invalid phase`)
+        })
+        const newCardCycle = new CardCycle({ phases })
+        const cardCyclesById = {
+          ...get().cardCyclesById,
+          [newCardCycle.id.toString()]: newCardCycle,
+        }
+        return { cardCyclesById }
+      },
     },
 
     CREATE_DECK: {
@@ -47,7 +111,25 @@ export const useCoreActions
 
     CREATE_HAND: {
       domain: `System`,
-      run: () => ({}),
+      run: ({ targets }) => {
+        const { identify } = get()
+        const { cardValueIds } = targets as {cardValueIds:CardValueId[]}
+        const cardsById = { ...get().cardsById }
+        const cardIds = cardValueIds.map(valueId => {
+          const idIsBogus = !identify(valueId)
+          if (idIsBogus) throw new Error(`id ${valueId} has no real value`)
+          const card = new Card(valueId)
+          const cardId = card.id
+          cardsById[cardId.toString()] = card
+          return cardId
+        })
+        const newDeck = new Deck({ cardIds })
+        const cardGroupsById = {
+          ...get().cardGroupsById,
+          [newDeck.id.toString()]: newDeck,
+        }
+        return { cardsById, cardGroupsById }
+      },
     },
 
     CREATE_PLAYER: {
@@ -75,20 +157,30 @@ export const useCoreActions
 
     CREATE_ZONE: {
       domain: `System`,
-      run: () => {
-        const newZone = new Zone()
+      run: ({ targets }) => {
+        const { identify } = get()
+        const { zoneLayoutId } = targets as {zoneLayoutId:ZoneLayoutId}
+        const zoneLayout = identify(zoneLayoutId) as ZoneLayout
+        const newZoneLayout = produce(zoneLayout, draft => {
+          draft.content.push(newZone.id)
+        })
+        const newZone = new Zone({})
         const zonesById = {
           ...get().zonesById,
           [newZone.id.toString()]: newZone,
         }
-        return { zonesById }
+        const zoneLayoutsById = {
+          ...get().zoneLayoutsById,
+          [newZoneLayout.id.toString()]: newZoneLayout,
+        }
+        return { zonesById, zoneLayoutsById }
       },
     },
 
-    CREATE_ZONELAYOUT: {
+    CREATE_ZONE_LAYOUT: {
       domain: `System`,
       run: () => {
-        const newZoneLayout = new ZoneLayout()
+        const newZoneLayout = new ZoneLayout({})
         const zoneLayoutsById = {
           ...get().zoneLayoutsById,
           [newZoneLayout.id.toString()]: newZoneLayout,
@@ -149,7 +241,19 @@ export const useCoreActions
 
     LOAD: {
       domain: `System`,
-      run: () => ({}),
+      run: ({ options }) => {
+        const { values } = options as {values:{rank:string, suit:string}[]}
+        const newCardValuesById: Record<string, CardValue> = {}
+        values.forEach(value => {
+          const newCardValue = new CardValue({ content: value })
+          newCardValuesById[newCardValue.id.toString()] = newCardValue
+        })
+        const cardValuesById = {
+          ...get().cardValuesById,
+          ...newCardValuesById,
+        }
+        return { cardValuesById }
+      },
     },
 
     PLACE: {

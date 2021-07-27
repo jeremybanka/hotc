@@ -13,6 +13,7 @@ import {
   ZoneLayout,
 } from "../core/models"
 import { IAction, IActionRequest } from '../core/actions/types'
+import { CardValue } from '../core/models/CardValue'
 
 export interface GameSession {
   id: GameId
@@ -27,12 +28,12 @@ export interface GameSession {
   cardsById: Record<string, Card>
   cardCyclesById: Record<string, CardCycle>
   cardGroupsById: Record<string, CardGroup>
-  cardValuesById: Record<string, string>
+  cardValuesById: Record<string, CardValue>
   playersById: Record<string, Player>
   playerIdsByUserId: Record<number, string>
   playerIdsBySocketId: Record<string, string>
   registerSocket: (socketId:string) => {to: (player:Player) => void}
-  zonesById: Record<string, Zone>
+  zonesById: Record<string, Zone<any>>
   zoneLayoutsById: Record<string, ZoneLayout>
 }
 
@@ -90,16 +91,16 @@ const createGame
     })
   },
 
-  getSocketOwner: (socketId:string) =>
-    get().playersById[get().playerIdsBySocketId[socketId]],
-
-  getPlayers: () => Object.values(get().playersById),
-
-  forEachPlayer: (fn:CallableFunction): void => {
+  forEachPlayer: (fn:(draft:Player) => void): void => {
     get().getPlayers().forEach(player => {
       produce(player, (draft:Player) => fn(draft))
     })
   },
+
+  getPlayers: () => Object.values(get().playersById),
+
+  getSocketOwner: (socketId:string) =>
+    get().playersById[get().playerIdsBySocketId[socketId]],
 
   install: (installer:CallableFunction): void => {
     set(state => {
@@ -115,7 +116,7 @@ const createGame
     const { subjectId, targets, options } = payload
     const action = get().actions[type]
 
-    console.log(`action`, { ...payload, subjectId: subjectId?.toString() })
+    console.log(`action`, type, { ...payload, subjectId: subjectId?.toString() })
 
     try {
       const update = action.run({ subjectId, targets, options })

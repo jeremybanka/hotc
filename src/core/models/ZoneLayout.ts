@@ -1,15 +1,19 @@
 import { immerable } from "immer"
-import { Zone } from "."
+import { ZoneId, ZoneLayoutId } from "../util/Id"
+
+interface IZoneLayoutProps {
+  id?: string
+}
 
 export class ZoneLayout {
   [immerable] = true
 
-  id: string
+  id: ZoneLayoutId
 
-  content: (Zone|ZoneLayout)[]
+  content: (ZoneId|ZoneLayoutId)[]
 
-  constructor() {
-    this.id = `foo`
+  constructor({ id }: IZoneLayoutProps) {
+    this.id = new ZoneLayoutId(id)
     this.content = []
   }
 }

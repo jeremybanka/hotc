@@ -1,6 +1,7 @@
 export * from './Card'
 export * from './CardCycle'
 export * from './CardGroup'
+export * from './CardValue'
 export * from './Player'
 export * from './Zone'
 export * from './ZoneLayout'

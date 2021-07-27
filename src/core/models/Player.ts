@@ -7,7 +7,7 @@ import {
   RealTargets,
   VirtualTargets,
 } from "../actions/types"
-import { Card, CardCycle } from "."
+import { Card } from "."
 import {
   PlayerId,
   CardGroupId,
@@ -19,24 +19,9 @@ import {
   VirtualCardCycleId,
   CardCycleId,
   anonClassDict,
+  virtualIdClassDict,
 } from "../util/Id"
-
-const mapObject
-= <I, O> (
-  obj: Record<string, I>,
-  fn: (val: I) => O
-)
-: Record<string, O> => {
-  const newObj = {}
-  const entries = Object.entries(obj)
-  const newEntries = entries.map(entry =>
-    [entry[0], fn(entry[1])] as [string, O]
-  )
-  newEntries.forEach(entry => {
-    newObj[entry[0]] = entry[1]
-  })
-  return newObj
-}
+import mapObject from "../util/mapObject"
 
 export class Perspective { // players[playerId].virtualize(trueId)
   [immerable] = true
@@ -101,11 +86,19 @@ export class Perspective { // players[playerId].virtualize(trueId)
     targets: this.virtualizeTargets(action.payload.targets),
   })
 
-  unlink = (trueId:TrueId): void => {
+  hide = (trueId:TrueId): void => {
     const trueIdString = trueId.toString()
     const virtualIdString = this.virtualizeId(trueId).toString()
-    delete this.trueIds[trueIdString]
-    delete this.virtualIds[virtualIdString]
+    delete this.trueIds[virtualIdString]
+    delete this.virtualIds[trueIdString]
+  }
+
+  show = (trueId:TrueId): void => {
+    const virtualId = new virtualIdClassDict[trueId.of]()
+    const trueIdString = trueId.toString()
+    const virtualIdString = virtualId.toString()
+    this.trueIds[virtualIdString] = trueId
+    this.virtualIds[trueIdString] = virtualId
   }
 }
 
@@ -122,8 +115,6 @@ export class Player extends Perspective {
 
   userId: number
 
-  cardCyclesById: Record<string, CardCycle>
-
   imperativeLog: IVirtualImperative[]
 
   constructor(displayName:string, userId:number) {
@@ -133,7 +124,6 @@ export class Player extends Perspective {
     this.inbox = []
     this.displayName = displayName
     this.userId = userId
-    this.cardCyclesById = {}
     this.imperativeLog = []
     // this.hand = []
     // this.deck = []
