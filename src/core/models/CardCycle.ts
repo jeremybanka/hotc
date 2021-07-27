@@ -1,5 +1,12 @@
 import { CardCycleId, CardGroupId, PlayerId, ZoneId } from "../util/Id"
 
+export type TStatus =
+  | `Dormant`
+  | `Ready`
+  | `Active`
+  | `Dead`
+  | `Exiled`
+
 type TPhase =
   | CardGroupId
   | ZoneId
