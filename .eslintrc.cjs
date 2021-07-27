@@ -133,5 +133,7 @@ module.exports = {
     "quote-props": [`error`, `consistent`, { unnecessary: false }],
     "semi": [`error`, `never`],
     "semi-style": [`error`, `first`],
+
+    "@typescript-eslint/no-explicit-any": `off`,
   },
 }
