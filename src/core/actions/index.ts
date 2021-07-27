@@ -1,8 +1,7 @@
 import produce from "immer"
 import { StoreApi } from "zustand/vanilla"
 import { GameSession } from "../../store/game"
-import { Card, Deck, Hand, Player, Zone } from "../models"
-import { CardValue } from "../models/CardValue"
+import { Card, Deck, Hand, Player, Zone, ZoneLayout } from "../models"
 import {  CardGroupId, CardValueId } from "../util/Id"
 import  { actionType, IAction  } from "./types"
 
@@ -61,6 +60,18 @@ export const useCoreActions
       },
     },
 
+    CREATE_LAYOUT: {
+      domain: `System`,
+      run: () => {
+        const newZoneLayout = new ZoneLayout()
+        const zoneLayoutsById = {
+          ...get().zoneLayoutsById,
+          [newZoneLayout.id.toString()]: newZoneLayout,
+        }
+        return { zoneLayoutsById }
+      },
+    },
+
     DRAW: {
       domain: `Deck`,
       run: ({ subjectId, targets }) => {
@@ -86,7 +97,7 @@ export const useCoreActions
           const hand = identify(handId) as Hand
           newHand = produce(hand, draft => draft.add(cardId))
         } else {
-          newHand = new Hand({ cards: [cardId], ownerId: subject.id })
+          newHand = new Hand({ cardIds: [cardId], ownerId: subject.id })
           newSubject = produce(subject, player => {
             player.cycleIdToHandIdMap.set(cardCycleId, newHand.id)
           })

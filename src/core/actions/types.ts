@@ -6,11 +6,20 @@ export type domainType =
   | `Deck`
 
 export type actionType =
+  | `CLEAR_TABLE`
+  | `CREATE_CYCLE`
   | `CREATE_DECK`
+  | `CREATE_HAND`
+  | `CREATE_LAYOUT`
   | `CREATE_PLAYER`
+  | `CREATE_TAKE`
+  | `CREATE_TRICK`
   | `CREATE_ZONE`
   | `DEAL`
   | `DRAW`
+  | `LOAD`
+  | `PLACE`
+  | `SHUFFLE`
 
 export type RealTargets = Record<string, TrueId|TrueId[]>
 
