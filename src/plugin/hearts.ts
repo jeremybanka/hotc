@@ -29,7 +29,10 @@ const useHeartsActions
   return {
     init: {
       domain: `System`,
-      run: () => ({ }),
+      run: () =>
+
+        ({})
+      ,
     },
 
   }
@@ -43,3 +46,31 @@ const hearts = {
 }
 
 export default useHeartsActions
+
+// CLEAR_TABLE
+// LOAD_CARD_VALUES
+// // set "classic_52"
+// // => card_vals { card_val_id_X: card_val_X } (52)
+// CREATE_ZONE_LAYOUT for "everyone"
+// // => layout_id
+// CREATE_ZONE in layout_id for Deck
+// // => zone_id_Deck
+// CREATE_ZONE in layout_id for Trick
+// // => zone_id_Trick
+// CREATE_DECK
+// // with card_vals.keys.toArray()
+// // => deck_id
+// for P, CREATE_HAND
+// // for P_id
+// // => {hand_id_P_id} (P#)
+// for P, CREATE_TAKE
+// // for P_id
+// // => {take_id_P_id} (P#)
+// CREATE_CARD_CYCLE
+// // from [deck_id, {hand_id_P_id}, zone_id_Trick, {}]
+// // => cycle_id
+// P, CREATE_ZONE_LAYOUT
+// // for P_id
+// PLACE_DECK deck_id on zone_id_DECK
+// SHUFFLE deck_id
+// DEAL deck_id "maximum"
