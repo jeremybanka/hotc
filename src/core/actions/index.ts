@@ -2,7 +2,8 @@ import produce from "immer"
 import { StoreApi } from "zustand/vanilla"
 import { GameSession } from "../../store/game"
 import { Card, Deck, Hand, Player, Zone } from "../models"
-import {  CardGroupId } from "../util/Id"
+import { CardValue } from "../models/CardValue"
+import {  CardGroupId, CardValueId } from "../util/Id"
 import  { actionType, IAction  } from "./types"
 
 export const useCoreActions
@@ -11,6 +12,29 @@ export const useCoreActions
   // const set = fn => game.setState(fn)
   const get = () => game.getState()
   return ({
+
+    CREATE_DECK: {
+      domain: `System`,
+      run: ({ targets }) => {
+        const { identify } = get()
+        const { cardValueIds } = targets as {cardValueIds:CardValueId[]}
+        const cardsById = { ...get().cardsById }
+        const cardIds = cardValueIds.map(valueId => {
+          const idIsBogus = !identify(valueId)
+          if (idIsBogus) throw new Error(`id ${valueId} has no real value`)
+          const card = new Card(valueId)
+          const cardId = card.id
+          cardsById[cardId.toString()] = card
+          return cardId
+        })
+        const newDeck = new Deck({ cardIds })
+        const cardGroupsById = {
+          ...get().cardGroupsById,
+          [newDeck.id.toString()]: newDeck,
+        }
+        return { cardsById, cardGroupsById }
+      },
+    },
 
     CREATE_PLAYER: {
       domain: `System`,
@@ -24,16 +48,6 @@ export const useCoreActions
         return { playersById, playerIdsByUserId }
       },
     },
-
-    // ({ systemArgs }): => {
-    //   const [userId, socketId] = systemArgs
-    //   set(state => {
-    //     const newPlayer = new Player(Math.random.toString(), userId)
-    //     state.playersByUserId[userId] = newPlayer
-    //     state.registerSocket(socketId).to(newPlayer)
-    //     state.playersById[newPlayer.id.toString()] = newPlayer
-    //   })
-    // }
 
     CREATE_ZONE: {
       domain: `System`,
@@ -49,13 +63,15 @@ export const useCoreActions
 
     DRAW: {
       domain: `Deck`,
-      run: ({ from, targets }) => {
+      run: ({ subjectId, targets }) => {
+        if (!subjectId) throw new Error(``)
         const { identify } = get()
-        const [cardGroupId] = targets as [CardGroupId]
-        const subject = identify(from) as Player
+        const { cardGroupId } = targets as {cardGroupId:CardGroupId}
+        const subject = identify(subjectId) as Player
         const targetDeck = identify(cardGroupId) as Deck
         if (!subject) throw new Error(``)
         if (!targetDeck) throw new Error(``)
+
         let cardId
         const newDeck = produce(targetDeck, deck => {
           cardId = deck.draw()
@@ -63,6 +79,7 @@ export const useCoreActions
         const card = identify(cardId) as Card
         const cardCycleId = card.cycleId
         const handId = subject.cycleIdToHandIdMap.get(cardCycleId)
+
         let newHand
         let newSubject
         if (handId) {
@@ -74,6 +91,7 @@ export const useCoreActions
             player.cycleIdToHandIdMap.set(cardCycleId, newHand.id)
           })
         }
+
         const cardGroupsById = {
           ...get().cardGroupsById,
           [newDeck.id.toString()]: newDeck,
@@ -90,7 +108,7 @@ export const useCoreActions
 
     DEAL: {
       domain: `Deck`,
-      run: () => undefined,
+      run: () => ({}),
     },
   })
 }

@@ -2,24 +2,29 @@ import { GameSession } from "../../store/game"
 import { PlayerId, TrueId, VirtualId } from "../util/Id"
 
 export type domainType =
-  |`System`
-  |`Deck`
+  | `System`
+  | `Deck`
 
 export type actionType =
-  |`CREATE_PLAYER`
-  |`CREATE_ZONE`
-  |`DEAL`
-  |`DRAW`
+  | `CREATE_DECK`
+  | `CREATE_PLAYER`
+  | `CREATE_ZONE`
+  | `DEAL`
+  | `DRAW`
+
+export type RealTargets = Record<string, TrueId|TrueId[]>
+
+export type VirtualTargets = Record<string, VirtualId|VirtualId[]>
 
 export interface IVirtualActionRequest {
   type: actionType
-  targets: VirtualId[]
+  targets?: VirtualTargets
   options?: Record<string, (number|string)>
 }
 
 export interface IActionRequestPayload {
-  from: PlayerId
-  targets: TrueId[]
+  subjectId?: PlayerId
+  targets?: RealTargets
   options?: Record<string, (number|string)>
 }
 
@@ -38,7 +43,7 @@ export interface IAction {
 }
 
 export interface IVirtualImperative {
-  from?: PlayerId
-  targets: VirtualId[]
+  subjectId?: PlayerId
+  targets?: VirtualTargets
   type: actionType
 }
