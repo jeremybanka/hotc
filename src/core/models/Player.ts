@@ -4,8 +4,10 @@ import {
   IActionRequest,
   IVirtualActionRequest,
   IVirtualImperative,
+  RealTargets,
+  VirtualTargets,
 } from "../actions/types"
-import { Card, CardCycle, CardGroup } from "."
+import { Card, CardCycle } from "."
 import {
   PlayerId,
   CardGroupId,
@@ -18,6 +20,23 @@ import {
   CardCycleId,
   anonClassDict,
 } from "../util/Id"
+
+const mapObject
+= <I, O> (
+  obj: Record<string, I>,
+  fn: (val: I) => O
+)
+: Record<string, O> => {
+  const newObj = {}
+  const entries = Object.entries(obj)
+  const newEntries = entries.map(entry =>
+    [entry[0], fn(entry[1])] as [string, O]
+  )
+  newEntries.forEach(entry => {
+    newObj[entry[0]] = entry[1]
+  })
+  return newObj
+}
 
 export class Perspective { // players[playerId].virtualize(trueId)
   [immerable] = true
@@ -47,6 +66,16 @@ export class Perspective { // players[playerId].virtualize(trueId)
   virtualizeIds = (reals: TrueId[]): VirtualId[] =>
     reals.map((target:TrueId) => this.virtualizeId(target))
 
+  virtualizeEntry = (real:TrueId[]|TrueId): VirtualId[]|VirtualId =>
+    Array.isArray(real)
+      ? this.virtualizeIds(real)
+      : this.virtualizeId(real)
+
+  virtualizeTargets = (targets?:RealTargets): VirtualTargets|undefined =>
+    targets && mapObject<VirtualId|VirtualId[], TrueId|TrueId[]>(
+      targets, this.virtualizeEntry
+    )
+
   devirtualizeId: {
     (id: VirtualCardId): CardId
     (id: VirtualCardGroupId): CardGroupId
@@ -56,10 +85,20 @@ export class Perspective { // players[playerId].virtualize(trueId)
   devirtualizeIds = (virtuals: VirtualId[] = []): TrueId[] =>
     virtuals.map(target => this.devirtualizeId(target))
 
+  devirtualizeEntry = (virtual:VirtualId[]|VirtualId): TrueId[]|TrueId =>
+    Array.isArray(virtual)
+      ? this.virtualizeIds(virtual)
+      : this.virtualizeId(virtual)
+
+  devirtualizeTargets = (targets?: VirtualTargets): RealTargets|undefined =>
+    targets && mapObject<TrueId|TrueId[], VirtualId|VirtualId[]>(
+      targets, this.devirtualizeEntry
+    )
+
   deriveImperative = (action: IActionRequest): IVirtualImperative => ({
     type: action.type,
-    from: action.payload.from,
-    targets: this.virtualizeIds(action.payload.targets = []),
+    subjectId: action.payload.subjectId,
+    targets: this.virtualizeTargets(action.payload.targets),
   })
 
   unlink = (trueId:TrueId): void => {
@@ -103,13 +142,17 @@ export class Player extends Perspective {
 
   devirtualizeRequest
   = (request: IVirtualActionRequest)
-  : IActionRequest => ({
-    type: request.type,
-    payload: {
-      from: this.id,
-      targets: this.devirtualizeIds(request.targets),
-    },
-  })
+  : IActionRequest => {
+    const { type, options } = request
+    return ({
+      type,
+      payload: {
+        subjectId: this.id,
+        options,
+        targets: this.devirtualizeTargets(request.targets),
+      },
+    })
+  }
 
   receive = (card:Card): void => {
     if (card.ownerId?.toString() === this.id.toString()) console.log(`bingo`)
