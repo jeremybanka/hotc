@@ -1,5 +1,4 @@
 import { CardValueId } from "../util/Id"
-import { ICardGroupProps } from "./CardGroup"
 
 interface ICardValueProps {
   id?: string

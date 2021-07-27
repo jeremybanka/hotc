@@ -1,6 +1,6 @@
 import { immerable } from "immer"
 import { a } from "eny/build/node"
-import { CardGroupId, CardId, CardValueId, PlayerId } from "../util/Id"
+import { CardGroupId, CardId, PlayerId } from "../util/Id"
 import { privacy } from "./types"
 
 const { shuffle } = a

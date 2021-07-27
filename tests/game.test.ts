@@ -14,9 +14,9 @@ describe(`game/coreActions`, () => {
     }
     installCoreActions(game)
     get().dispatch(actionRequest)
-    console.log(get().playerIdsBySocketId)
-    console.log(get().playerIdsByUserId)
-    console.log(get().playersById)
+    // console.log(get().playerIdsBySocketId)
+    // console.log(get().playerIdsByUserId)
+    // console.log(get().playersById)
     expect(get().playerIdsBySocketId.foo).toBe(get().playerIdsByUserId[1])
   })
 
