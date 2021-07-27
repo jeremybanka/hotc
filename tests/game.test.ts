@@ -1,6 +1,5 @@
 import installCoreActions from "../src/core/actions"
 import { IActionRequest } from "../src/core/actions/types"
-import { PlayerId } from "../src/core/util/Id"
 import createGame from "../src/store/game"
 
 describe(`game/coreActions`, () => {
@@ -10,8 +9,6 @@ describe(`game/coreActions`, () => {
     const actionRequest:IActionRequest = {
       type: `CREATE_PLAYER`,
       payload: {
-        from: new PlayerId(),
-        targets: [],
         options: { userId: 1, socketId: `foo` },
       },
     }
@@ -21,6 +18,19 @@ describe(`game/coreActions`, () => {
     console.log(get().playerIdsByUserId)
     console.log(get().playersById)
     expect(get().playerIdsBySocketId.foo).toBe(get().playerIdsByUserId[1])
-    // console.log(get())
+  })
+
+  it(`can create a deck`, () => {
+    const game = createGame()
+    const get = () => game.getState()
+    const actionRequest:IActionRequest = {
+      type: `CREATE_DECK`,
+      payload: {
+        targets: { cardValueIds: [] },
+      },
+    }
+    installCoreActions(game)
+    get().dispatch(actionRequest)
+    expect(Object.entries(get().cardGroupsById).length).toBe(1)
   })
 })
