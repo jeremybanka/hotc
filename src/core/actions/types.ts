@@ -7,14 +7,14 @@ export type domainType =
 
 export type actionType =
   | `CLEAR_TABLE`
-  | `CREATE_CYCLE`
+  | `CREATE_CARDCYCLE`
   | `CREATE_DECK`
   | `CREATE_HAND`
-  | `CREATE_LAYOUT`
   | `CREATE_PLAYER`
   | `CREATE_TAKE`
   | `CREATE_TRICK`
   | `CREATE_ZONE`
+  | `CREATE_ZONELAYOUT`
   | `DEAL`
   | `DRAW`
   | `LOAD`

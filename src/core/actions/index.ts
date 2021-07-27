@@ -12,6 +12,16 @@ export const useCoreActions
   const get = () => game.getState()
   return ({
 
+    CLEAR_TABLE: {
+      domain: `System`,
+      run: () => ({}),
+    },
+
+    CREATE_CARDCYCLE: {
+      domain: `System`,
+      run: () => ({}),
+    },
+
     CREATE_DECK: {
       domain: `System`,
       run: ({ targets }) => {
@@ -35,6 +45,11 @@ export const useCoreActions
       },
     },
 
+    CREATE_HAND: {
+      domain: `System`,
+      run: () => ({}),
+    },
+
     CREATE_PLAYER: {
       domain: `System`,
       run: ({ options }) => {
@@ -46,6 +61,16 @@ export const useCoreActions
         get().registerSocket(socketId).to(newPlayer)
         return { playersById, playerIdsByUserId }
       },
+    },
+
+    CREATE_TAKE: {
+      domain: `System`,
+      run: () => ({}),
+    },
+
+    CREATE_TRICK: {
+      domain: `System`,
+      run: () => ({}),
     },
 
     CREATE_ZONE: {
@@ -60,7 +85,7 @@ export const useCoreActions
       },
     },
 
-    CREATE_LAYOUT: {
+    CREATE_ZONELAYOUT: {
       domain: `System`,
       run: () => {
         const newZoneLayout = new ZoneLayout()
@@ -70,6 +95,11 @@ export const useCoreActions
         }
         return { zoneLayoutsById }
       },
+    },
+
+    DEAL: {
+      domain: `Deck`,
+      run: () => ({}),
     },
 
     DRAW: {
@@ -117,8 +147,18 @@ export const useCoreActions
       },
     },
 
-    DEAL: {
-      domain: `Deck`,
+    LOAD: {
+      domain: `System`,
+      run: () => ({}),
+    },
+
+    PLACE: {
+      domain: `System`,
+      run: () => ({}),
+    },
+
+    SHUFFLE: {
+      domain: `System`,
       run: () => ({}),
     },
   })
