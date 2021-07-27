@@ -6,12 +6,12 @@ import {
 } from './core/actions/types'
 import { io } from "./server"
 import createGame from "./store/game"
+import useHeartsActions from './plugin/hearts'
 
 const game = createGame()
-
-const g = () => game.getState()
-
 installCoreActions(game)
+console.log(useHeartsActions(game))
+const g = () => game.getState()
 
 io.on(`connection`, socket => {
   console.log(`connect: ${socket.id}`)
@@ -89,7 +89,10 @@ socketAuth(io, {
   },
   postAuthenticate: socket => {
     console.log(`Socket ${socket.id} authenticated as ${socket.user.name}.`)
-    g().onPlayerJoin(socket.user.id, socket.id)
+    g().dispatch({
+      type: `CREATE_PLAYER`,
+      payload: { options: { userId: socket.user.id, socketId: socket.id } },
+    })
     socket.playerId = g().playerIdsBySocketId[socket.id]
 
     console.log(`idConfirmed`)
