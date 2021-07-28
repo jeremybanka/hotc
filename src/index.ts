@@ -1,15 +1,14 @@
 import socketAuth from 'socketio-auth'
-import installCoreActions from './core/actions'
 import {
   IVirtualActionRequest,
   IVirtualImperative,
 } from './core/actions/types'
 import { io } from "./server"
 import createGame from "./store/game"
-import useHeartsActions from './plugin/hearts'
+import useHeartsActions, { installHeartsActions } from './plugin/hearts'
 
 const game = createGame()
-installCoreActions(game)
+installHeartsActions(game)
 console.log(useHeartsActions(game))
 const g = () => game.getState()
 
