@@ -23,8 +23,12 @@ export interface GameSession {
   onPlayerJoin: CallableFunction
   getSocketOwner: CallableFunction
   getPlayers: () => Player[]
+  mapPlayers: (fn:(player:Player) => void) => Record<string, Player>
+  showPlayers: (id:TrueId) => void
+  forEach: <T> (slice:string, fn:(entity:T) => void) => void
   dispatch(actionRequest:IActionRequest) : void
   identify(id:TrueId) : unknown
+  stamp(type:string, id:string) : {[key:string]:TrueId}
   cardsById: Record<string, Card>
   cardCyclesById: Record<string, CardCycle>
   cardGroupsById: Record<string, CardGroup>
@@ -53,6 +57,27 @@ const createGame
   zonesById: {},
   zoneLayoutsById: {},
 
+  forEach(slice:string, fn:(entity:any) => void): void {
+    const entities = Object.values(get()[slice])
+    entities.forEach(fn)
+  },
+
+  mapPlayers(fn:(player:Player) => void): Record<string, Player> {
+    const newPlayersById = { ...get().playersById }
+    Object.values(newPlayersById).forEach(player => {
+      const newPlayer = produce(player, fn)
+      newPlayersById[player.id.toString()] = newPlayer
+    })
+    return newPlayersById
+  },
+
+  showPlayers(id:TrueId) {
+    set((state:GameSession) => {
+      const newPlayers = get().mapPlayers(player => player.show(id))
+      state.playersById = newPlayers
+    })
+  },
+
   identify(id: TrueId) {
     const idString = id.toString()
     switch (id.of) {
@@ -63,6 +88,19 @@ const createGame
       case `Player`: return get().playersById[idString]
       case `Zone`: return get().zonesById[idString]
       case `ZoneLayout`: return get().zoneLayoutsById[idString]
+      default: throw new Error(`id of unknown entity`)
+    }
+  },
+
+  stamp(type: string, id: string): any {
+    switch (type) {
+      case `cardId`: return { [type]: get().cardsById[id].id }
+      case `cardCycleId`: return { [type]: get().cardCyclesById[id].id }
+      case `cardGroupId`: return { [type]: get().cardGroupsById[id].id }
+      case `cardValueId`: return { [type]: get().cardValuesById[id].id }
+      case `playerId`: return { [type]: get().playersById[id].id }
+      case `zoneId`: return { [type]: get().zonesById[id].id }
+      case `zoneLayoutId`: return { [type]: get().zoneLayoutsById[id].id }
       default: throw new Error(`id of unknown entity`)
     }
   },

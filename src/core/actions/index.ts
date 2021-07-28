@@ -25,7 +25,7 @@ import  { actionType, IAction, RealTargets  } from "./types"
 export const useCoreActions
 = (game:StoreApi<GameSession>)
 : Record<actionType, IAction> => {
-  // const set = fn => game.setState(fn)
+  const set = fn => game.setState(fn)
   const get = () => game.getState()
   return ({
 
@@ -54,7 +54,10 @@ export const useCoreActions
       run: ({ targets, options }) => {
         if (!(targets && options)) throw new Error(`invalid call`)
         const realTargets = targets as RealTargets
-        const { phaseNames } = options as {phaseNames: (keyof RealTargets)[]}
+        const { id, phaseNames } = options as {
+          phaseNames: (keyof RealTargets)[],
+          id?: string
+        }
         const phases = phaseNames.map(phaseName => {
           const phase = realTargets[phaseName]
           if (!phase) throw new Error(`invalid call`)
@@ -77,7 +80,7 @@ export const useCoreActions
           if (phase instanceof ZoneId) return phase
           throw new Error(`invalid phase`)
         })
-        const newCardCycle = new CardCycle({ phases })
+        const newCardCycle = new CardCycle({ id, phases })
         const cardCyclesById = {
           ...get().cardCyclesById,
           [newCardCycle.id.toString()]: newCardCycle,
@@ -88,9 +91,10 @@ export const useCoreActions
 
     CREATE_DECK: {
       domain: `System`,
-      run: ({ targets }) => {
+      run: ({ targets, options = {} }) => {
         const { identify } = get()
         const { cardValueIds } = targets as {cardValueIds:CardValueId[]}
+        const { id } = options as {id?:string}
         const cardsById = { ...get().cardsById }
         const cardIds = cardValueIds.map(valueId => {
           const idIsBogus = !identify(valueId)
@@ -100,7 +104,7 @@ export const useCoreActions
           cardsById[cardId.toString()] = card
           return cardId
         })
-        const newDeck = new Deck({ cardIds })
+        const newDeck = new Deck({ id, cardIds })
         const cardGroupsById = {
           ...get().cardGroupsById,
           [newDeck.id.toString()]: newDeck,
@@ -111,34 +115,35 @@ export const useCoreActions
 
     CREATE_HAND: {
       domain: `System`,
-      run: ({ targets }) => {
-        const { identify } = get()
-        const { cardValueIds } = targets as {cardValueIds:CardValueId[]}
-        const cardsById = { ...get().cardsById }
-        const cardIds = cardValueIds.map(valueId => {
-          const idIsBogus = !identify(valueId)
-          if (idIsBogus) throw new Error(`id ${valueId} has no real value`)
-          const card = new Card(valueId)
-          const cardId = card.id
-          cardsById[cardId.toString()] = card
-          return cardId
-        })
-        const newDeck = new Deck({ cardIds })
+      run: ({ targets, options = {} }) => {
+        const { ownerId } = targets as {ownerId:PlayerId}
+        const { id } = options as {id?:string}
+        const newHand = new Hand({ id, ownerId })
         const cardGroupsById = {
           ...get().cardGroupsById,
-          [newDeck.id.toString()]: newDeck,
+          [newHand.id.toString()]: newHand,
         }
-        return { cardsById, cardGroupsById }
+        return { cardGroupsById }
       },
     },
 
     CREATE_PLAYER: {
       domain: `System`,
       run: ({ options }) => {
+        const { mapPlayers, forEach } = get()
         const { userId, socketId } = options as {userId:number, socketId:string}
         const newPlayer = new Player(`displayName`, userId)
         const playerId = newPlayer.id.toString()
-        const playersById = { [playerId]: newPlayer }
+        set((state:GameSession) => {
+          const newPlayers = mapPlayers(player => player.show(newPlayer.id))
+          state.playersById = newPlayers
+          newPlayer.show(newPlayer.id)
+          forEach<Player>(`playersById`, player => newPlayer.show(player.id))
+        })
+        const playersById = {
+          ...get().playersById,
+          [playerId]: newPlayer,
+        }
         const playerIdsByUserId = { [userId]: playerId }
         get().registerSocket(socketId).to(newPlayer)
         return { playersById, playerIdsByUserId }
@@ -157,14 +162,16 @@ export const useCoreActions
 
     CREATE_ZONE: {
       domain: `System`,
-      run: ({ targets }) => {
-        const { identify } = get()
+      run: ({ targets, options = {} }) => {
+        const { identify, showPlayers } = get()
         const { zoneLayoutId } = targets as {zoneLayoutId:ZoneLayoutId}
+        const { id } = options as {id?:string}
+        const newZone = new Zone({ id })
         const zoneLayout = identify(zoneLayoutId) as ZoneLayout
         const newZoneLayout = produce(zoneLayout, draft => {
           draft.content.push(newZone.id)
         })
-        const newZone = new Zone({})
+        showPlayers(newZone.id)
         const zonesById = {
           ...get().zonesById,
           [newZone.id.toString()]: newZone,
@@ -179,8 +186,11 @@ export const useCoreActions
 
     CREATE_ZONE_LAYOUT: {
       domain: `System`,
-      run: () => {
-        const newZoneLayout = new ZoneLayout({})
+      run: ({ options = {} }) => {
+        const { showPlayers } = get()
+        const { id } = options as {id?:string}
+        const newZoneLayout = new ZoneLayout({ id })
+        showPlayers(newZoneLayout.id)
         const zoneLayoutsById = {
           ...get().zoneLayoutsById,
           [newZoneLayout.id.toString()]: newZoneLayout,

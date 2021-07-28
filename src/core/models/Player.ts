@@ -1,4 +1,4 @@
-import { immerable } from "immer"
+import produce, { immerable } from "immer"
 import { nanoid } from "nanoid"
 import {
   IActionRequest,
@@ -26,9 +26,9 @@ import mapObject from "../util/mapObject"
 export class Perspective { // players[playerId].virtualize(trueId)
   [immerable] = true
 
-  private virtualIds: Record<string, VirtualId>
+  virtualIds: Record<string, VirtualId>
 
-  private trueIds: Record<string, TrueId>
+  trueIds: Record<string, TrueId>
 
   virtualActionLog: IVirtualActionRequest[]
 
@@ -82,23 +82,34 @@ export class Perspective { // players[playerId].virtualize(trueId)
 
   deriveImperative = (action: IActionRequest): IVirtualImperative => ({
     type: action.type,
-    subjectId: action.payload.subjectId,
+    subjectId: action.payload.subjectId
+    && this.virtualizeId(action.payload.subjectId),
     targets: this.virtualizeTargets(action.payload.targets),
   })
 
   hide = (trueId:TrueId): void => {
     const trueIdString = trueId.toString()
     const virtualIdString = this.virtualizeId(trueId).toString()
-    delete this.trueIds[virtualIdString]
-    delete this.virtualIds[trueIdString]
+    this.trueIds = produce(
+      this.trueIds,
+      draft => { delete draft[virtualIdString] }
+    )
+    this.virtualIds = produce(
+      this.virtualIds,
+      draft => { delete draft[trueIdString] }
+    )
   }
 
   show = (trueId:TrueId): void => {
     const virtualId = new virtualIdClassDict[trueId.of]()
     const trueIdString = trueId.toString()
     const virtualIdString = virtualId.toString()
-    this.trueIds[virtualIdString] = trueId
-    this.virtualIds[trueIdString] = virtualId
+    this.trueIds = { ...this.trueIds, [virtualIdString]: trueId }
+    this.virtualIds = { ...this.virtualIds, [trueIdString]: virtualId }
+    // console.log(`trueIds`, this.trueIds)
+    // console.log(`virtualIds`, this.virtualIds)
+    // this.trueIds[virtualIdString] = trueId
+    // this.virtualIds[trueIdString] = virtualId
   }
 }
 

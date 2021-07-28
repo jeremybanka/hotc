@@ -1,7 +1,14 @@
-import produce from "immer"
+// import produce from "immer"
 import { StoreApi } from "zustand/vanilla"
+import { EBUSY } from "constants"
 import { GameSession } from "../store/game"
-import { IAction } from "../core/actions/types"
+import {
+  actionType,
+  IAction, IActionRequestPayload,
+} from "../core/actions/types"
+import installCoreActions from "../core/actions"
+import { frenchPlayingCardDeck } from "./PlayingCard"
+import { Player } from "../core/models"
 
 // actions
 // [s] shuffle deck
@@ -21,18 +28,35 @@ import { IAction } from "../core/actions/types"
 // infinite layouts can have a new zone appended at any time
 // finite layouts have a certain number of zones that are "filled"
 
-const useHeartsActions
+export const useHeartsActions
 = (game:StoreApi<GameSession>)
 : Record<string, IAction> => {
-  const set = fn => game.setState(produce(fn))
-
+  installCoreActions(game)
+  const get = () => game.getState()
+  const { stamp } = get()
+  const getAllCardValueIds = () => Object.values(get().cardValuesById)
+    .map(cardValue => cardValue.id)
   return {
-    init: {
+    INIT: {
       domain: `System`,
-      run: () =>
+      run: () => {
+        const { forEach, dispatch } = get()
 
-        ({})
-      ,
+        const run = (
+          type:actionType,
+          payload:IActionRequestPayload
+        ) => dispatch({ type, payload })
+
+        run(`CLEAR_TABLE`, {})
+        run(`LOAD`, { options: { values: frenchPlayingCardDeck } })
+        run(`CREATE_ZONE_LAYOUT`, { options: { id: `main` } })
+        run(`CREATE_ZONE`, { targets: stamp(`zoneLayoutId`, `main`) })
+        run(`CREATE_DECK`, { targets: { cardValueIds: getAllCardValueIds() } })
+        forEach<Player>(`playersById`, player =>
+          run(`CREATE_HAND`, { targets: { ownerId: player.id } }))
+
+        return ({})
+      },
     },
 
   }
@@ -45,32 +69,16 @@ const hearts = {
   useHeartsActions,
 }
 
-export default useHeartsActions
+export const installHeartsActions
+= (game:StoreApi<GameSession>)
+: void => {
+  const heartsActions = useHeartsActions(game)
+  game.setState(state => {
+    state.actions = {
+      ...state.actions,
+      ...heartsActions,
+    }
+  })
+}
 
-// CLEAR_TABLE
-// LOAD_CARD_VALUES
-// // set "classic_52"
-// // => card_vals { card_val_id_X: card_val_X } (52)
-// CREATE_ZONE_LAYOUT for "everyone"
-// // => layout_id
-// CREATE_ZONE in layout_id for Deck
-// // => zone_id_Deck
-// CREATE_ZONE in layout_id for Trick
-// // => zone_id_Trick
-// CREATE_DECK
-// // with card_vals.keys.toArray()
-// // => deck_id
-// for P, CREATE_HAND
-// // for P_id
-// // => {hand_id_P_id} (P#)
-// for P, CREATE_TAKE
-// // for P_id
-// // => {take_id_P_id} (P#)
-// CREATE_CARD_CYCLE
-// // from [deck_id, {hand_id_P_id}, zone_id_Trick, {}]
-// // => cycle_id
-// P, CREATE_ZONE_LAYOUT
-// // for P_id
-// PLACE_DECK deck_id on zone_id_DECK
-// SHUFFLE deck_id
-// DEAL deck_id "maximum"
+export default installHeartsActions
