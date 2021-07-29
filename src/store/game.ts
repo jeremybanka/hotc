@@ -12,8 +12,8 @@ import {
 import {
   IAction,
   IActionRequest,
+  IdType,
   RealTargets,
-  TargetType,
 } from '../core/actions/types'
 import { CardValue } from '../core/models/CardValue'
 import mapObject from '../core/util/mapObject'
@@ -45,14 +45,16 @@ export interface GameSession extends GameData {
   playerIdsBySocketId: Record<string, string>
   dispatch(actionRequest:IActionRequest) : void
   forEach<T>(slice: keyof GameData, fn:(entity:T) => void) : void
+  getPlayers(): Player[]
+  getSocketOwner(socketId:string) : Player
   identify(id:TrueId) : unknown
   mapPlayers(fn:(player:Player) => void) : Record<string, Player>
   mapEach(slice: keyof GameData, fn:(entity:gameEntity) => gameEntity)
     : Partial<Record<string, gameEntity>>
+  match(type:IdType, pattern:string|((entity:gameEntity) => boolean)) : TrueId
   registerSocket(socketId:string) : {to: (player:Player) => void}
   showPlayers(id:TrueId) : void
-  getSocketOwner(socketId:string) : Player
-  target(type:TargetType, id:string) : RealTargets
+  target(type:IdType, id:string) : RealTargets
 }
 
 const createGame
@@ -105,6 +107,8 @@ const createGame
     entities.forEach(fn)
   },
 
+  getPlayers: () => Object.values(get().playersById),
+
   getSocketOwner: socketId =>
     get().playersById[get().playerIdsBySocketId[socketId]],
 
@@ -139,6 +143,28 @@ const createGame
     return newPlayersById
   },
 
+  match(type, pattern) {
+    const sliceNamesByType = {
+      cardId: `cardsById`,
+      cardCycleId: `cardCyclesById`,
+      cardGroupId: `cardGroupsById`,
+      cardValueId: `cardValuesById`,
+      playerId: `playersById`,
+      zoneId: `zonesById`,
+      zoneLayoutId: `zoneLayoutsById`,
+    }
+    const sliceName = sliceNamesByType[type]
+    const slice = get()[sliceName]
+    let id
+    if (typeof pattern === `string`) id = slice[pattern].id
+    if (typeof pattern === `function`) {
+      get().forEach<gameEntity>(slice, entity => {
+        if (pattern(entity) === true) id = entity.id
+      })
+    }
+    return id
+  },
+
   showPlayers(id) {
     set((state:GameSession) => {
       const newPlayers = get().mapPlayers(player => player.show(id))
@@ -146,18 +172,7 @@ const createGame
     })
   },
 
-  target(type, id) {
-    switch (type) {
-      case `cardId`: return { [type]: get().cardsById[id].id }
-      case `cardCycleId`: return { [type]: get().cardCyclesById[id].id }
-      case `cardGroupId`: return { [type]: get().cardGroupsById[id].id }
-      case `cardValueId`: return { [type]: get().cardValuesById[id].id }
-      case `playerId`: return { [type]: get().playersById[id].id }
-      case `zoneId`: return { [type]: get().zonesById[id].id }
-      case `zoneLayoutId`: return { [type]: get().zoneLayoutsById[id].id }
-      default: throw new Error(`id of unknown entity`)
-    }
-  },
+  target: (type, id) => ({ [type]: get().match(type, id) }),
 
   registerSocket: socketId => ({
     to: (player:Player) => {
