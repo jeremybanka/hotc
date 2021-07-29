@@ -95,9 +95,8 @@ const createGame
     const { actorId, targets, options } = payload
     const action = get().actions[type]
 
-    /*
     console.log(`action`, type, { ...payload, actorId: actorId?.toString() })
-*/
+
     try {
       const update = action.run({ actorId, targets, options })
       set((state:GameSession) => {

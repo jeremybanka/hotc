@@ -46,6 +46,7 @@ export const useCoreActions
           cardsById: {},
           cardCyclesById: {},
           cardGroupsById: {},
+          cardValuesById: {},
           playersById,
           zonesById: {},
           zoneLayoutsById: {},
@@ -262,17 +263,17 @@ export const useCoreActions
     DEAL: {
       domain: `Deck`,
       run: ({ targets, options = {} }) => {
-        console.log(`DEAL`, targets)
+        // console.log(`DEAL`, targets)
         const { run, identify, getPlayers, forEach } = get()
-        const { cardGroupId } = targets as {cardGroupId:CardGroupId}
+        const { deckId } = targets as {deckId:CardGroupId}
         let { howMany: roundsRemaining = 1 } = options as {howMany?:number}
         while (roundsRemaining) {
-          const deck = identify(cardGroupId) as Deck
-          console.log(roundsRemaining, `rounds remaining`,
-            deck.cardIds.length, `cards left`)
+          const deck = identify(deckId) as Deck
+          // console.log(roundsRemaining, `rounds remaining`,
+          // deck.cardIds.length, `cards left`)
           if (deck.cardIds.length < getPlayers().length) break
           forEach<Player>(`playersById`, p => {
-            run(`DRAW`, { actorId: p.id, targets: { cardGroupId } })
+            run(`DRAW`, { actorId: p.id, targets: { deckId } })
           })
           --roundsRemaining
         }
@@ -283,10 +284,10 @@ export const useCoreActions
     DEAL_ALL: {
       domain: `Deck`,
       run: ({ targets }) => {
-        console.log(`DEAL_ALL`, targets)
+        // console.log(`DEAL_ALL`, targets)
         const { identify } = get()
-        const { cardGroupId } = targets as {cardGroupId:CardGroupId}
-        const deck = identify(cardGroupId) as Deck
+        const { deckId } = targets as {deckId:CardGroupId}
+        const deck = identify(deckId) as Deck
         return get().actions.DEAL.run({
           targets,
           options: { howMany: deck.cardIds.length },
@@ -298,19 +299,14 @@ export const useCoreActions
       domain: `Deck`,
       run: ({ actorId, targets }) => {
         if (!actorId) throw new Error(``)
-        const { identify, match } = get()
-        const { cardGroupId } = targets as {cardGroupId:CardGroupId}
-        console.log(`DRAW`, targets, actorId)
+        const { identify, match, run } = get()
+        const { deckId } = targets as {deckId:CardGroupId}
+        // console.log(`DRAW`, targets, actorId)
         const actor = identify(actorId) as Player
-        const targetDeck = identify(cardGroupId) as Deck
+        const targetDeck = identify(deckId) as Deck
         if (!actor) throw new Error(``)
         if (!targetDeck) throw new Error(``)
 
-        let cardId
-        const newDeck = produce(targetDeck, deck => {
-          console.log(`deck-${deck.id.toString()}:`, deck.cardIds.length)
-          cardId = deck.cardIds.shift()
-        })
         const handId = match<CardGroup>(
           `cardGroupId`,
           cardGroup => (
@@ -318,35 +314,45 @@ export const useCoreActions
             && cardGroup.class === `Hand`
           )
         )
-        console.log(`players`, get().playerIdsBySocketId)
+        run(`MOVE`, {
+          targets: {
+            originId: deckId,
+            destinationId: handId,
+          },
+          options: { howMany: 1, originIdx: 0, destinationIdx: 0 },
+        })
+        return {}
+      },
+    },
 
-        let newActor
-        // if (handId) {
-        const hand = identify(handId) as Hand
-        const newHand = produce(hand, draft => draft.add(cardId))
-        console.log(`new hand`, newHand)
+    MOVE: {
+      domain: `System`,
+      run: ({ targets, options }) => {
+        const { identify } = get()
+        const { originId, destinationId }
+        = targets as {
+          originId:CardGroupId,
+          destinationId:CardGroupId}
+        const { howMany, originIdx, destinationIdx }
+        = options as Record<string, number>
+        const origin = identify(originId) as CardGroup
+        let cardIds
+        const newOrigin = produce(origin, cardGroup => {
+          cardIds = cardGroup.cardIds.splice(originIdx, howMany)
+        })
+        const destination = identify(destinationId) as CardGroup
 
-        // } else {
-        //   newHand = new Hand({ cardIds: [cardId], ownerId: actor.id })
-        //   newActor = produce(actor, player => {
-        //     player.cycleIdToHandIdMap.set(cardCycleId, newHand.id)
-        //   })
-        //   console.log(`newActor`, newActor)
-        // }
+        const newDestination = produce(destination, cardGroup => {
+          // console.log(`deck-${deck.id.toString()}:`, deck.cardIds.length)
+          cardGroup.cardIds.splice(destinationIdx, 0, cardIds)
+        })
 
         const cardGroupsById = {
           ...get().cardGroupsById,
-          [newDeck.id.toString()]: newDeck,
-          [newHand.id.toString()]: newHand,
+          [newOrigin.id.toString()]: newOrigin,
+          [newDestination.id.toString()]: newDestination,
         }
-        // if (!newActor)
         return { cardGroupsById }
-
-        const playersById = {
-          ...get().playersById,
-          [newActor.id.toString()]: newActor,
-        }
-        return { cardGroupsById, playersById }
       },
     },
 

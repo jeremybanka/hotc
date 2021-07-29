@@ -38,7 +38,7 @@ export const useHeartsActions
     INIT: {
       domain: `System`,
       run: () => {
-        const { every, forEach, dispatch, match, run, target } = get()
+        const { every, forEach, match, run, target } = get()
 
         run(`CLEAR_TABLE`, {})
         run(`CREATE_CARD_VALUES`, { options: { values: frenchPlayingCardDeck } })
@@ -85,7 +85,7 @@ export const useHeartsActions
             3: every<Zone>(`zoneId`, zone => (!!zone.ownerId && zone.contentType === `Pile`)),
           },
         })
-        run(`DEAL_ALL`, { targets: target(`cardGroupId`, `main-deck`) })
+        run(`DEAL_ALL`, { targets: { deckId: match(`cardGroupId`, `main-deck`) } })
         return ({})
       },
     },

@@ -65,12 +65,12 @@ export class Deck extends CardGroup {
   shuffle = (): void => (this.cardIds = shuffle(this.cardIds))
 
   draw = (): CardId => {
-    console.log(this.cardIds.shift)
-    console.log(this.cardIds.slice(1).length)
+    // console.log(this.cardIds.shift)
+    // console.log(this.cardIds.slice(1).length)
 
     const drawnCard = this.cardIds[0]
     this.cardIds = this.cardIds.slice(1)
-    console.log(`drawnCard`, drawnCard)
+    // console.log(`drawnCard`, drawnCard)
     if (!drawnCard) throw new Error(`deck is empty`)
     return drawnCard
   }

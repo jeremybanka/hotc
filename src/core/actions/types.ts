@@ -15,7 +15,9 @@ export type TargetType =
   | number
   | `cardValueIds`
   | `deckId`
+  | `destinationId`
   | `handId`
+  | `originId`
   | `ownerId`
 
 export type DomainType =
@@ -40,6 +42,7 @@ export type ActionType =
   | `DEAL`
   | `DEAL_ALL`
   | `DRAW`
+  | `MOVE`
   | `PLACE`
   | `SHUFFLE`
 
@@ -76,5 +79,7 @@ export interface IAction {
 export interface IVirtualImperative {
   actorId?: PlayerId
   targets?: VirtualTargets
+  options?: Record<string, any>
   type: ActionType
+  id: string
 }

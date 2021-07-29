@@ -80,6 +80,8 @@ export class Perspective { // players[playerId].virtualize(trueId)
     )
 
   deriveImperative = (action: IActionRequest): IVirtualImperative => ({
+    id: nanoid(),
+    options: action.payload.options,
     type: action.type,
     actorId: action.payload.actorId
     && this.virtualizeId(action.payload.actorId),
