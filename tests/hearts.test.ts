@@ -19,7 +19,6 @@ describe(`hearts actions`, () => {
         }
         make(request)
         x--
-        console.log(`# of players`, g().getPlayers().length)
       }
     }
     addPlayers(3)
@@ -27,7 +26,7 @@ describe(`hearts actions`, () => {
   })
   describe(`INIT`, () => {
     it(``, () => {
-      console.log(g().actions)
+      // console.log(g().actions)
       const request = {
         type: `INIT`,
         payload: { },

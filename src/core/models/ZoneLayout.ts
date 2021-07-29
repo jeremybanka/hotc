@@ -1,8 +1,9 @@
 import { immerable } from "immer"
-import { ZoneId, ZoneLayoutId } from "../util/Id"
+import { PlayerId, ZoneId, ZoneLayoutId } from "../util/Id"
 
 interface IZoneLayoutProps {
   id?: string
+  ownerId?: PlayerId
 }
 
 export class ZoneLayout {
@@ -10,10 +11,13 @@ export class ZoneLayout {
 
   id: ZoneLayoutId
 
+  ownerId: PlayerId | null
+
   content: (ZoneId|ZoneLayoutId)[]
 
-  constructor({ id }: IZoneLayoutProps) {
+  constructor({ id, ownerId }: IZoneLayoutProps) {
     this.id = new ZoneLayoutId(id)
+    this.ownerId = ownerId || null
     this.content = []
   }
 }

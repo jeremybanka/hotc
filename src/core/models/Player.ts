@@ -5,6 +5,7 @@ import {
   IVirtualActionRequest,
   IVirtualImperative,
   RealTargets,
+  targetType,
   VirtualTargets,
 } from "../actions/types"
 import { Card } from "."
@@ -42,11 +43,9 @@ export class Perspective { // players[playerId].virtualize(trueId)
     (id: CardId): VirtualCardId
     (id: CardGroupId): VirtualCardGroupId
     (id: CardCycleId): VirtualCardCycleId
-  } = (id: TrueId): VirtualId => {
-    console.log(id)
-    return this.virtualIds[id.toString()]
+  } = (id: TrueId): VirtualId =>
+    this.virtualIds[id.toString()]
     || new anonClassDict[id.of](nanoid())
-  }
 
   virtualizeIds = (reals: TrueId[]): VirtualId[] =>
     reals.map((target:TrueId) => this.virtualizeId(target))
@@ -57,7 +56,7 @@ export class Perspective { // players[playerId].virtualize(trueId)
       : this.virtualizeId(real)
 
   virtualizeTargets = (targets?:RealTargets): VirtualTargets|undefined =>
-    targets && mapObject<VirtualId|VirtualId[], TrueId|TrueId[]>(
+    targets && mapObject<targetType, TrueId|TrueId[], VirtualId|VirtualId[]>(
       targets, this.virtualizeEntry
     )
 
@@ -76,7 +75,7 @@ export class Perspective { // players[playerId].virtualize(trueId)
       : this.virtualizeId(virtual)
 
   devirtualizeTargets = (targets?: VirtualTargets): RealTargets|undefined =>
-    targets && mapObject<TrueId|TrueId[], VirtualId|VirtualId[]>(
+    targets && mapObject<targetType, VirtualId|VirtualId[], TrueId|TrueId[]>(
       targets, this.devirtualizeEntry
     )
 

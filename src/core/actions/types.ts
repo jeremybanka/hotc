@@ -5,25 +5,38 @@ export type domainType =
   | `System`
   | `Deck`
 
+export type optionType =
+  | `id`
+
+export type targetType =
+  | number
+  | `cardValueIds`
+  | `deckId`
+  | `ownerId`
+  | `playerId`
+  | `zoneId`
+  | `zoneLayoutId`
+
 export type actionType =
   | `CLEAR_TABLE`
   | `CREATE_CARD_CYCLE`
+  | `CREATE_CARD_GROUP`
+  | `CREATE_CARD_VALUES`
   | `CREATE_DECK`
   | `CREATE_HAND`
+  | `CREATE_PILE`
   | `CREATE_PLAYER`
-  | `CREATE_TAKE`
   | `CREATE_TRICK`
   | `CREATE_ZONE`
   | `CREATE_ZONE_LAYOUT`
   | `DEAL`
   | `DRAW`
-  | `LOAD`
   | `PLACE`
   | `SHUFFLE`
 
-export type RealTargets = Record<string, TrueId|TrueId[]>
+export type RealTargets = Partial<Record<targetType, TrueId|TrueId[]>>
 
-export type VirtualTargets = Record<string, VirtualId|VirtualId[]>
+export type VirtualTargets = Partial<Record<targetType, VirtualId|VirtualId[]>>
 
 export interface IVirtualActionRequest {
   type: actionType

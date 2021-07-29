@@ -7,7 +7,10 @@ import {
   CardValue,
   Deck,
   Hand,
+  IZoneProps,
+  Pile,
   Player,
+  Trick,
   Zone,
   ZoneLayout,
 } from "../models"
@@ -67,7 +70,7 @@ export const useCoreActions
                 const hand = new Hand({})
                 return [id, hand.id] as [PlayerId, CardGroupId]
               } else if (id instanceof ZoneId) {
-                const zone = get().identify(id) as Zone<any>
+                const zone = get().identify(id) as Zone
                 if (zone.ownerId instanceof PlayerId) {
                   return [zone.ownerId, id] as [PlayerId, ZoneId]
                 }
@@ -89,14 +92,21 @@ export const useCoreActions
       },
     },
 
-    CREATE_DECK: {
+    CREATE_CARD_GROUP: {
       domain: `System`,
       run: ({ targets, options = {} }) => {
+        const classes = { Deck, Pile, Trick }
         const { identify } = get()
-        const { cardValueIds } = targets as {cardValueIds:CardValueId[]}
-        const { id } = options as {id?:string}
+        const { cardValueIds, zoneId } = targets as {
+          cardValueIds?:CardValueId[]
+          zoneId?:ZoneId
+        }
+        const { id, className = `Deck` } = options as {
+          id?:string,
+          className?:keyof typeof classes
+        }
         const cardsById = { ...get().cardsById }
-        const cardIds = cardValueIds.map(valueId => {
+        const cardIds = cardValueIds?.map(valueId => {
           const idIsBogus = !identify(valueId)
           if (idIsBogus) throw new Error(`id ${valueId} has no real value`)
           const card = new Card(valueId)
@@ -104,13 +114,52 @@ export const useCoreActions
           cardsById[cardId.toString()] = card
           return cardId
         })
-        const newDeck = new Deck({ id, cardIds })
+        const newCardGroup = new classes[className]({ id, cardIds })
         const cardGroupsById = {
           ...get().cardGroupsById,
-          [newDeck.id.toString()]: newDeck,
+          [newCardGroup.id.toString()]: newCardGroup,
+        }
+        if (zoneId) {
+          try {
+            const zone = identify(zoneId) as Zone
+            const newZone = produce(zone, draft => draft.place(newCardGroup))
+            const zonesById = {
+              ...get().zonesById,
+              [newZone.id.toString()]: newZone,
+            }
+            return { cardsById, cardGroupsById, zonesById }
+          } catch (e) { console.log(e) }
         }
         return { cardsById, cardGroupsById }
       },
+    },
+
+    CREATE_CARD_VALUES: {
+      domain: `System`,
+      run: ({ options }) => {
+        const { showPlayers } = get()
+        const { values } = options as {values:{rank:string, suit:string}[]}
+        const newCardValuesById: Record<string, CardValue> = {}
+        values.forEach(value => {
+          const newCardValue = new CardValue({ content: value })
+          newCardValuesById[newCardValue.id.toString()] = newCardValue
+          showPlayers(newCardValue.id)
+        })
+        const cardValuesById = {
+          ...get().cardValuesById,
+          ...newCardValuesById,
+        }
+        return { cardValuesById }
+      },
+    },
+
+    CREATE_DECK: {
+      domain: `System`,
+      run: ({ targets, options = {} }) =>
+        get().actions.CREATE_CARD_GROUP.run({
+          targets,
+          options: { ...options, className: `Deck` },
+        }),
     },
 
     CREATE_HAND: {
@@ -150,9 +199,13 @@ export const useCoreActions
       },
     },
 
-    CREATE_TAKE: {
+    CREATE_PILE: {
       domain: `System`,
-      run: () => ({}),
+      run: ({ targets, options = {} }) =>
+        get().actions.CREATE_CARD_GROUP.run({
+          targets,
+          options: { ...options, className: `Pile` },
+        }),
     },
 
     CREATE_TRICK: {
@@ -165,8 +218,8 @@ export const useCoreActions
       run: ({ targets, options = {} }) => {
         const { identify, showPlayers } = get()
         const { zoneLayoutId } = targets as {zoneLayoutId:ZoneLayoutId}
-        const { id } = options as {id?:string}
-        const newZone = new Zone({ id })
+        const { id, contentType } = options as IZoneProps
+        const newZone = new Zone({ id, contentType })
         const zoneLayout = identify(zoneLayoutId) as ZoneLayout
         const newZoneLayout = produce(zoneLayout, draft => {
           draft.content.push(newZone.id)
@@ -186,10 +239,11 @@ export const useCoreActions
 
     CREATE_ZONE_LAYOUT: {
       domain: `System`,
-      run: ({ options = {} }) => {
+      run: ({ targets = {}, options = {} }) => {
         const { showPlayers } = get()
         const { id } = options as {id?:string}
-        const newZoneLayout = new ZoneLayout({ id })
+        const { ownerId } = targets as {ownerId?:PlayerId}
+        const newZoneLayout = new ZoneLayout({ id, ownerId })
         showPlayers(newZoneLayout.id)
         const zoneLayoutsById = {
           ...get().zoneLayoutsById,
@@ -246,23 +300,6 @@ export const useCoreActions
           [newSubject.id.toString()]: newSubject,
         }
         return { cardGroupsById, playersById }
-      },
-    },
-
-    LOAD: {
-      domain: `System`,
-      run: ({ options }) => {
-        const { values } = options as {values:{rank:string, suit:string}[]}
-        const newCardValuesById: Record<string, CardValue> = {}
-        values.forEach(value => {
-          const newCardValue = new CardValue({ content: value })
-          newCardValuesById[newCardValue.id.toString()] = newCardValue
-        })
-        const cardValuesById = {
-          ...get().cardValuesById,
-          ...newCardValuesById,
-        }
-        return { cardValuesById }
       },
     },
 

@@ -12,7 +12,12 @@ import {
   Zone,
   ZoneLayout,
 } from "../core/models"
-import { IAction, IActionRequest } from '../core/actions/types'
+import {
+  IAction,
+  IActionRequest,
+  RealTargets,
+  targetType,
+} from '../core/actions/types'
 import { CardValue } from '../core/models/CardValue'
 
 export interface GameSession {
@@ -25,10 +30,10 @@ export interface GameSession {
   getPlayers: () => Player[]
   mapPlayers: (fn:(player:Player) => void) => Record<string, Player>
   showPlayers: (id:TrueId) => void
-  forEach: <T> (slice:string, fn:(entity:T) => void) => void
+  forEach: <T> (slice:keyof GameSession, fn:(entity:T) => void) => void
   dispatch(actionRequest:IActionRequest) : void
   identify(id:TrueId) : unknown
-  stamp(type:string, id:string) : {[key:string]:TrueId}
+  target(type:targetType, id:string) : RealTargets
   cardsById: Record<string, Card>
   cardCyclesById: Record<string, CardCycle>
   cardGroupsById: Record<string, CardGroup>
@@ -37,7 +42,7 @@ export interface GameSession {
   playerIdsByUserId: Record<number, string>
   playerIdsBySocketId: Record<string, string>
   registerSocket: (socketId:string) => {to: (player:Player) => void}
-  zonesById: Record<string, Zone<any>>
+  zonesById: Record<string, Zone>
   zoneLayoutsById: Record<string, ZoneLayout>
 }
 
@@ -92,7 +97,7 @@ const createGame
     }
   },
 
-  stamp(type: string, id: string): any {
+  target(type, id) {
     switch (type) {
       case `cardId`: return { [type]: get().cardsById[id].id }
       case `cardCycleId`: return { [type]: get().cardCyclesById[id].id }

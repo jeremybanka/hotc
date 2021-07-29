@@ -65,7 +65,7 @@ describe(`Core Actions`, () => {
     })
     it(`creates a standard deck of cards`, () => {
       const request1: IActionRequest = {
-        type: `LOAD`,
+        type: `CREATE_CARD_VALUES`,
         payload: { options: { values: frenchPlayingCardDeck } },
       }
       make(request1)
@@ -86,7 +86,7 @@ describe(`Core Actions`, () => {
   describe(`LOAD`, () => {
     it(`loads new CardValues`, () => {
       const request: IActionRequest = {
-        type: `LOAD`,
+        type: `CREATE_CARD_VALUES`,
         payload: { options: { values: frenchPlayingCardDeck } },
       }
       make(request)

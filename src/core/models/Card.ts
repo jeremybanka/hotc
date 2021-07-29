@@ -4,6 +4,8 @@ import { privacy } from "./types"
 export class Card {
   id: CardId
 
+  class = `Card`
+
   valueId: CardValueId
 
   cycleId: CardCycleId | null

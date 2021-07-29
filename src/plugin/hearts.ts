@@ -1,6 +1,6 @@
 // import produce from "immer"
+/* eslint-disable max-len */
 import { StoreApi } from "zustand/vanilla"
-import { EBUSY } from "constants"
 import { GameSession } from "../store/game"
 import {
   actionType,
@@ -33,14 +33,13 @@ export const useHeartsActions
 : Record<string, IAction> => {
   installCoreActions(game)
   const get = () => game.getState()
-  const { stamp } = get()
   const getAllCardValueIds = () => Object.values(get().cardValuesById)
     .map(cardValue => cardValue.id)
   return {
     INIT: {
       domain: `System`,
       run: () => {
-        const { forEach, dispatch } = get()
+        const { every, forEach, dispatch, match, target } = get()
 
         const run = (
           type:actionType,
@@ -48,13 +47,50 @@ export const useHeartsActions
         ) => dispatch({ type, payload })
 
         run(`CLEAR_TABLE`, {})
-        run(`LOAD`, { options: { values: frenchPlayingCardDeck } })
-        run(`CREATE_ZONE_LAYOUT`, { options: { id: `main` } })
-        run(`CREATE_ZONE`, { targets: stamp(`zoneLayoutId`, `main`) })
-        run(`CREATE_DECK`, { targets: { cardValueIds: getAllCardValueIds() } })
-        forEach<Player>(`playersById`, player =>
-          run(`CREATE_HAND`, { targets: { ownerId: player.id } }))
-
+        run(`CREATE_CARD_VALUES`, { options: { values: frenchPlayingCardDeck } })
+        run(`CREATE_ZONE_LAYOUT`, { options: { id: `main-layout` } })
+        run(`CREATE_ZONE`, {
+          options: { id: `main-deck-zone`, contentType: `Deck` },
+          targets: target(`zoneLayoutId`, `main-layout`),
+        })
+        run(`CREATE_ZONE`, {
+          options: { id: `main-trick-zone` },
+          targets: target(`zoneLayoutId`, `main-layout`),
+        })
+        run(`CREATE_DECK`, {
+          options: { id: `main-deck` },
+          targets: { ...target(`zoneId`, `main-deck-zone`), cardValueIds: getAllCardValueIds() },
+        })
+        forEach<Player>(`playersById`, p => {
+          const idString = p.id.toString()
+          const zoneLayoutIdStr = `${idString}-zoneLayout`
+          const pileZoneIdStr = `${idString}-pile-zone`
+          const pileIdStr = `${idString}-pile`
+          run(`CREATE_HAND`, {
+            targets: { ownerId: p.id },
+          })
+          run(`CREATE_ZONE_LAYOUT`, {
+            options: { id: zoneLayoutIdStr },
+            targets: { ownerId: p.id },
+          })
+          run(`CREATE_ZONE`, {
+            options: { id: pileZoneIdStr, contentType: `Pile` },
+            targets: target(`zoneLayoutId`, zoneLayoutIdStr),
+          })
+          run(`CREATE_PILE`, {
+            options: { id: pileIdStr },
+            targets: target(`zoneId`, pileZoneIdStr),
+          })
+        })
+        run(`CREATE_CARD_CYCLE`, {
+          options: { id: `main-cycle`, phaseNames: [0, 1, 2, 3] },
+          targets: {
+            0: match(`deckId`, `main-deck`),
+            1: every(`cardGroupId`, hand => !!hand.ownerId),
+            2: match(`zoneId`, `main-trick-zone`),
+            3: every(`zoneId`, zone => (!!zone.ownerId && zone.contentType === `Pile`)),
+          },
+        })
         return ({})
       },
     },

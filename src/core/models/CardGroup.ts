@@ -2,6 +2,7 @@ import { immerable } from "immer"
 import { a } from "eny/build/node"
 import { CardGroupId, CardId, PlayerId } from "../util/Id"
 import { privacy } from "./types"
+import toggle from "../util/toggle"
 
 const { shuffle } = a
 
@@ -10,6 +11,7 @@ export interface ICardGroupProps {
   cardIds?: CardId[]
   ownerId?: PlayerId | null
   rotated?: 0
+  privacy?: privacy
 }
 
 export class CardGroup {
@@ -61,6 +63,19 @@ export class Deck extends CardGroup {
     return drawnCard
   }
 }
+
+export class Pile extends CardGroup {
+  class = `Pile`
+
+  constructor(props:ICardGroupProps) {
+    super(props)
+    this.privacy = props.privacy || `public`
+  }
+
+  flip = (): void => { this.privacy = toggle(this.privacy, `hidden`, `public`) }
+}
+
+export class Trick extends CardGroup { class = `Trick` }
 
 export class Hand extends CardGroup {
   constructor(props:ICardGroupProps) {
