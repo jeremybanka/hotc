@@ -25,7 +25,17 @@ type gameEntity =
   | CardValue
   | Player
   | Zone
-  | Zone
+  | ZoneLayout
+
+const SLICE_NAMES_BY_TYPE = {
+  cardId: `cardsById`,
+  cardCycleId: `cardCyclesById`,
+  cardGroupId: `cardGroupsById`,
+  cardValueId: `cardValuesById`,
+  playerId: `playersById`,
+  zoneId: `zonesById`,
+  zoneLayoutId: `zoneLayoutsById`,
+}
 
 export interface GameData {
   cardsById: Record<string, Card>
@@ -44,6 +54,7 @@ export interface GameSession extends GameData {
   playerIdsByUserId: Record<number, string>
   playerIdsBySocketId: Record<string, string>
   dispatch(actionRequest:IActionRequest) : void
+  every<T extends gameEntity>(type:IdType, fn:((entity:T) => boolean)) : TrueId[]
   forEach<T>(slice: keyof GameData, fn:(entity:T) => void) : void
   getPlayers(): Player[]
   getSocketOwner(socketId:string) : Player
@@ -51,7 +62,10 @@ export interface GameSession extends GameData {
   mapPlayers(fn:(player:Player) => void) : Record<string, Player>
   mapEach(slice: keyof GameData, fn:(entity:gameEntity) => gameEntity)
     : Partial<Record<string, gameEntity>>
-  match(type:IdType, pattern:string|((entity:gameEntity) => boolean)) : TrueId
+  match<T extends gameEntity>(
+    type:IdType,
+    pattern:string|((entity:T) => boolean))
+    : TrueId
   registerSocket(socketId:string) : {to: (player:Player) => void}
   showPlayers(id:TrueId) : void
   target(type:IdType, id:string) : RealTargets
@@ -102,6 +116,16 @@ const createGame
     }
   },
 
+  every<T extends gameEntity>(type, fn) {
+    const sliceName = SLICE_NAMES_BY_TYPE[type]
+    const slice = get()[sliceName]
+    const ids: TrueId[] = []
+    get().forEach<T>(slice, entity => {
+      if (fn(entity) === true) ids.push(entity.id)
+    })
+    return ids
+  },
+
   forEach(slice, fn) {
     const entities = Object.values(get()[slice])
     entities.forEach(fn)
@@ -143,22 +167,13 @@ const createGame
     return newPlayersById
   },
 
-  match(type, pattern) {
-    const sliceNamesByType = {
-      cardId: `cardsById`,
-      cardCycleId: `cardCyclesById`,
-      cardGroupId: `cardGroupsById`,
-      cardValueId: `cardValuesById`,
-      playerId: `playersById`,
-      zoneId: `zonesById`,
-      zoneLayoutId: `zoneLayoutsById`,
-    }
-    const sliceName = sliceNamesByType[type]
+  match<T extends gameEntity>(type, pattern) {
+    const sliceName = SLICE_NAMES_BY_TYPE[type]
     const slice = get()[sliceName]
     let id
     if (typeof pattern === `string`) id = slice[pattern].id
     if (typeof pattern === `function`) {
-      get().forEach<gameEntity>(slice, entity => {
+      get().forEach<T>(slice, entity => {
         if (pattern(entity) === true) id = entity.id
       })
     }

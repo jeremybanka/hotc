@@ -8,7 +8,7 @@ import {
 } from "../core/actions/types"
 import installCoreActions from "../core/actions"
 import { frenchPlayingCardDeck } from "./PlayingCard"
-import { Player } from "../core/models"
+import { CardGroup, Player, Zone } from "../core/models"
 
 // actions
 // [s] shuffle deck
@@ -85,10 +85,10 @@ export const useHeartsActions
         run(`CREATE_CARD_CYCLE`, {
           options: { id: `main-cycle`, phaseNames: [0, 1, 2, 3] },
           targets: {
-            0: match(`cardGroupId`, `main-deck`),
-            1: every(`cardGroupId`, hand => !!hand.ownerId),
-            2: match(`zoneId`, `main-trick-zone`),
-            3: every(`zoneId`, zone => (!!zone.ownerId && zone.contentType === `Pile`)),
+            0: match<CardGroup>(`cardGroupId`, `main-deck`),
+            1: every<CardGroup>(`cardGroupId`, hand => !!hand.ownerId),
+            2: match<Zone>(`zoneId`, `main-trick-zone`),
+            3: every<Zone>(`zoneId`, zone => (!!zone.ownerId && zone.contentType === `Pile`)),
           },
         })
         return ({})
