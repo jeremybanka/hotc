@@ -40,7 +40,8 @@ export const useCoreActions
             draft.cycleIdToHandIdMap = new Map()
             draft.inbox = []
           })
-        const playersById = mapObject(get().playersById, clearPlayer)
+        const playersById
+        = mapObject(get().playersById, clearPlayer) as Record<string, Player>
         return {
           cardsById: {},
           cardCyclesById: {},

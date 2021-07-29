@@ -1,9 +1,9 @@
 const mapObject
 = <K extends (string|number), I, O> (
-  obj: Partial<Record<K, I>>,
+  obj: Partial<Record<K, I>> | Record<K, I>,
   fn: (val: I) => O
 )
-: Partial<Record<K, O>> => {
+: Partial<Record<K, O>> | Record<K, I> => {
   const newObj = { } as Record<K, O>
   const entries = Object.entries(obj) as [K, I][]
   const newEntries = entries.map(entry =>
