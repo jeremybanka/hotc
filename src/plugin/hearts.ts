@@ -85,7 +85,7 @@ export const useHeartsActions
         run(`CREATE_CARD_CYCLE`, {
           options: { id: `main-cycle`, phaseNames: [0, 1, 2, 3] },
           targets: {
-            0: match(`deckId`, `main-deck`),
+            0: match(`cardGroupId`, `main-deck`),
             1: every(`cardGroupId`, hand => !!hand.ownerId),
             2: match(`zoneId`, `main-trick-zone`),
             3: every(`zoneId`, zone => (!!zone.ownerId && zone.contentType === `Pile`)),

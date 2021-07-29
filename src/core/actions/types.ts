@@ -2,6 +2,7 @@ import { GameSession } from "../../store/game"
 import { PlayerId, TrueId, VirtualId } from "../util/Id"
 
 export type IdType =
+  | `cardId`
   | `cardCycleId`
   | `cardGroupId`
   | `cardValueId`
