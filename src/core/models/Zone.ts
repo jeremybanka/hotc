@@ -22,6 +22,7 @@ export class Zone {
   content: null | CardId | CardGroupId
 
   constructor({ id, ownerId, contentType, content }: IZoneProps) {
+    // console.log(`ctor`, ownerId)
     this.id = new ZoneId(id)
     this.ownerId = ownerId || null
     this.contentType = contentType || null
@@ -29,7 +30,7 @@ export class Zone {
   }
 
   place = (entity:(Deck|Trick|Pile|Card)): void => {
-    console.log(entity)
+    // console.log(entity)
     if (this.content) throw new Error(`zone is full`)
     if (this.contentType) {
       const entityClass = entity.class

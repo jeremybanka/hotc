@@ -32,7 +32,7 @@ describe(`hearts actions`, () => {
         payload: { },
       }
       make(request)
-      console.log(g())
+      console.log(g().cardGroupsById)
       // const { cardValuesById } = g()
       // expect(tallyOf(cardValuesById)).toBe(52)
       // CLEAR_TABLE

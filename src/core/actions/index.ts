@@ -4,6 +4,7 @@ import { GameSession } from "../../store/game"
 import {
   Card,
   CardCycle,
+  CardGroup,
   CardValue,
   Deck,
   Hand,
@@ -37,7 +38,6 @@ export const useCoreActions
       run: () => {
         const clearPlayer = (player:Player): Player =>
           produce(player, draft => {
-            draft.cycleIdToHandIdMap = new Map()
             draft.inbox = []
           })
         const playersById
@@ -98,10 +98,12 @@ export const useCoreActions
       run: ({ targets, options = {} }) => {
         const classes = { Deck, Pile, Trick }
         const { identify } = get()
-        const { cardValueIds, zoneId } = targets as {
-          cardValueIds?:CardValueId[]
-          zoneId?:ZoneId
+        const { cardValueIds, zoneId, ownerId } = targets as {
+          cardValueIds?: CardValueId[]
+          ownerId?: PlayerId
+          zoneId?: ZoneId
         }
+        // if (options.className === `Pile`)console.log(ownerId)
         const { id, className = `Deck` } = options as {
           id?:string,
           className?:keyof typeof classes
@@ -115,7 +117,7 @@ export const useCoreActions
           cardsById[cardId.toString()] = card
           return cardId
         })
-        const newCardGroup = new classes[className]({ id, cardIds })
+        const newCardGroup = new classes[className]({ id, cardIds, ownerId })
         const cardGroupsById = {
           ...get().cardGroupsById,
           [newCardGroup.id.toString()]: newCardGroup,
@@ -218,9 +220,12 @@ export const useCoreActions
       domain: `System`,
       run: ({ targets, options = {} }) => {
         const { identify, showPlayers } = get()
-        const { zoneLayoutId } = targets as {zoneLayoutId:ZoneLayoutId}
+        const { zoneLayoutId, ownerId } = targets as {
+          zoneLayoutId:ZoneLayoutId,
+          ownerId:PlayerId
+        }
         const { id, contentType } = options as IZoneProps
-        const newZone = new Zone({ id, contentType })
+        const newZone = new Zone({ id, contentType, ownerId })
         const zoneLayout = identify(zoneLayoutId) as ZoneLayout
         const newZoneLayout = produce(zoneLayout, draft => {
           draft.content.push(newZone.id)
@@ -256,49 +261,90 @@ export const useCoreActions
 
     DEAL: {
       domain: `Deck`,
-      run: () => ({}),
+      run: ({ targets, options = {} }) => {
+        console.log(`DEAL`, targets)
+        const { run, identify, getPlayers, forEach } = get()
+        const { cardGroupId } = targets as {cardGroupId:CardGroupId}
+        let { howMany: roundsRemaining = 1 } = options as {howMany?:number}
+        while (roundsRemaining) {
+          const deck = identify(cardGroupId) as Deck
+          console.log(roundsRemaining, `rounds remaining`,
+            deck.cardIds.length, `cards left`)
+          if (deck.cardIds.length < getPlayers().length) break
+          forEach<Player>(`playersById`, p => {
+            run(`DRAW`, { actorId: p.id, targets: { cardGroupId } })
+          })
+          --roundsRemaining
+        }
+        return ({})
+      },
+    },
+
+    DEAL_ALL: {
+      domain: `Deck`,
+      run: ({ targets }) => {
+        console.log(`DEAL_ALL`, targets)
+        const { identify } = get()
+        const { cardGroupId } = targets as {cardGroupId:CardGroupId}
+        const deck = identify(cardGroupId) as Deck
+        return get().actions.DEAL.run({
+          targets,
+          options: { howMany: deck.cardIds.length },
+        })
+      },
     },
 
     DRAW: {
       domain: `Deck`,
-      run: ({ subjectId, targets }) => {
-        if (!subjectId) throw new Error(``)
-        const { identify } = get()
+      run: ({ actorId, targets }) => {
+        if (!actorId) throw new Error(``)
+        const { identify, match } = get()
         const { cardGroupId } = targets as {cardGroupId:CardGroupId}
-        const subject = identify(subjectId) as Player
+        console.log(`DRAW`, targets, actorId)
+        const actor = identify(actorId) as Player
         const targetDeck = identify(cardGroupId) as Deck
-        if (!subject) throw new Error(``)
+        if (!actor) throw new Error(``)
         if (!targetDeck) throw new Error(``)
 
         let cardId
         const newDeck = produce(targetDeck, deck => {
-          cardId = deck.draw()
+          console.log(`deck-${deck.id.toString()}:`, deck.cardIds.length)
+          cardId = deck.cardIds.shift()
         })
-        const card = identify(cardId) as Card
-        const cardCycleId = card.cycleId
-        const handId = subject.cycleIdToHandIdMap.get(cardCycleId)
+        const handId = match<CardGroup>(
+          `cardGroupId`,
+          cardGroup => (
+            cardGroup.ownerId === actorId
+            && cardGroup.class === `Hand`
+          )
+        )
+        console.log(`players`, get().playerIdsBySocketId)
 
-        let newHand
-        let newSubject
-        if (handId) {
-          const hand = identify(handId) as Hand
-          newHand = produce(hand, draft => draft.add(cardId))
-        } else {
-          newHand = new Hand({ cardIds: [cardId], ownerId: subject.id })
-          newSubject = produce(subject, player => {
-            player.cycleIdToHandIdMap.set(cardCycleId, newHand.id)
-          })
-        }
+        let newActor
+        // if (handId) {
+        const hand = identify(handId) as Hand
+        const newHand = produce(hand, draft => draft.add(cardId))
+        console.log(`new hand`, newHand)
+
+        // } else {
+        //   newHand = new Hand({ cardIds: [cardId], ownerId: actor.id })
+        //   newActor = produce(actor, player => {
+        //     player.cycleIdToHandIdMap.set(cardCycleId, newHand.id)
+        //   })
+        //   console.log(`newActor`, newActor)
+        // }
 
         const cardGroupsById = {
           ...get().cardGroupsById,
           [newDeck.id.toString()]: newDeck,
           [newHand.id.toString()]: newHand,
         }
-        if (!newSubject) return { cardGroupsById }
+        // if (!newActor)
+        return { cardGroupsById }
+
         const playersById = {
           ...get().playersById,
-          [newSubject.id.toString()]: newSubject,
+          [newActor.id.toString()]: newActor,
         }
         return { cardGroupsById, playersById }
       },

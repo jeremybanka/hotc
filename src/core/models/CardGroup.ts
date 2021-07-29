@@ -1,6 +1,6 @@
 import { immerable } from "immer"
 import { a } from "eny/build/node"
-import { CardGroupId, CardId, PlayerId } from "../util/Id"
+import { CardCycleId, CardGroupId, CardId, PlayerId } from "../util/Id"
 import { privacy } from "./types"
 import toggle from "../util/toggle"
 
@@ -9,7 +9,8 @@ const { shuffle } = a
 export interface ICardGroupProps {
   id?: string
   cardIds?: CardId[]
-  ownerId?: PlayerId | null
+  cardCycleId?: CardCycleId
+  ownerId?: PlayerId
   rotated?: 0
   privacy?: privacy
 }
@@ -18,6 +19,8 @@ export class CardGroup {
   [immerable] = true
 
   cardIds: CardId[]
+
+  cardCycleId: CardCycleId | null
 
   class: string
 
@@ -32,14 +35,16 @@ export class CardGroup {
   constructor({
     id,
     cardIds = [],
-    ownerId = null,
+    cardCycleId,
+    ownerId,
     rotated = 0,
   }:ICardGroupProps) {
     this.id = new CardGroupId(id)
     this.class = `CardGroup`
     this.cardIds = cardIds
+    this.cardCycleId = cardCycleId || null
     this.privacy = `public`
-    this.ownerId = ownerId
+    this.ownerId = ownerId || null
     this.rotated = rotated
   }
 
@@ -49,6 +54,8 @@ export class CardGroup {
 }
 
 export class Deck extends CardGroup {
+  [immerable] = true
+
   constructor(props: ICardGroupProps) {
     super(props)
     this.class = `Deck`
@@ -58,7 +65,12 @@ export class Deck extends CardGroup {
   shuffle = (): void => (this.cardIds = shuffle(this.cardIds))
 
   draw = (): CardId => {
-    const drawnCard = this.cardIds.shift()
+    console.log(this.cardIds.shift)
+    console.log(this.cardIds.slice(1).length)
+
+    const drawnCard = this.cardIds[0]
+    this.cardIds = this.cardIds.slice(1)
+    console.log(`drawnCard`, drawnCard)
     if (!drawnCard) throw new Error(`deck is empty`)
     return drawnCard
   }

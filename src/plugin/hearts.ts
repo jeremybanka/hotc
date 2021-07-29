@@ -3,8 +3,7 @@
 import { StoreApi } from "zustand/vanilla"
 import { GameSession } from "../store/game"
 import {
-  ActionType,
-  IAction, IActionRequestPayload,
+  IAction,
 } from "../core/actions/types"
 import installCoreActions from "../core/actions"
 import { frenchPlayingCardDeck } from "./PlayingCard"
@@ -39,12 +38,7 @@ export const useHeartsActions
     INIT: {
       domain: `System`,
       run: () => {
-        const { every, forEach, dispatch, match, target } = get()
-
-        const run = (
-          type: ActionType,
-          payload: IActionRequestPayload
-        ) => dispatch({ type, payload })
+        const { every, forEach, dispatch, match, run, target } = get()
 
         run(`CLEAR_TABLE`, {})
         run(`CREATE_CARD_VALUES`, { options: { values: frenchPlayingCardDeck } })
@@ -75,22 +69,23 @@ export const useHeartsActions
           })
           run(`CREATE_ZONE`, {
             options: { id: pileZoneIdStr, contentType: `Pile` },
-            targets: target(`zoneLayoutId`, zoneLayoutIdStr),
+            targets: { ownerId: p.id, ...target(`zoneLayoutId`, zoneLayoutIdStr) },
           })
           run(`CREATE_PILE`, {
             options: { id: pileIdStr },
-            targets: target(`zoneId`, pileZoneIdStr),
+            targets: { ownerId: p.id, ...target(`zoneId`, pileZoneIdStr) },
           })
         })
         run(`CREATE_CARD_CYCLE`, {
           options: { id: `main-cycle`, phaseNames: [0, 1, 2, 3] },
           targets: {
             0: match<CardGroup>(`cardGroupId`, `main-deck`),
-            1: every<CardGroup>(`cardGroupId`, hand => !!hand.ownerId),
+            1: every<Player>(`playerId`, () => true),
             2: match<Zone>(`zoneId`, `main-trick-zone`),
             3: every<Zone>(`zoneId`, zone => (!!zone.ownerId && zone.contentType === `Pile`)),
           },
         })
+        run(`DEAL_ALL`, { targets: target(`cardGroupId`, `main-deck`) })
         return ({})
       },
     },

@@ -10,8 +10,10 @@ import {
   ZoneLayout,
 } from "../core/models"
 import {
+  ActionType,
   IAction,
   IActionRequest,
+  IActionRequestPayload,
   IdType,
   RealTargets,
 } from '../core/actions/types'
@@ -27,7 +29,7 @@ type gameEntity =
   | Zone
   | ZoneLayout
 
-const SLICE_NAMES_BY_TYPE = {
+const SLICE_NAMES_BY_TYPE: Record<string, keyof GameData> = {
   cardId: `cardsById`,
   cardCycleId: `cardCyclesById`,
   cardGroupId: `cardGroupsById`,
@@ -67,6 +69,7 @@ export interface GameSession extends GameData {
     pattern:string|((entity:T) => boolean))
     : TrueId
   registerSocket(socketId:string) : {to: (player:Player) => void}
+  run(type: ActionType, payload: IActionRequestPayload): void
   showPlayers(id:TrueId) : void
   target(type:IdType, id:string) : RealTargets
 }
@@ -89,13 +92,14 @@ const createGame
 
   dispatch: actionRequest => {
     const { type, payload } = actionRequest
-    const { subjectId, targets, options } = payload
+    const { actorId, targets, options } = payload
     const action = get().actions[type]
 
-    console.log(`action`, type, { ...payload, subjectId: subjectId?.toString() })
-
+    /*
+    console.log(`action`, type, { ...payload, actorId: actorId?.toString() })
+*/
     try {
-      const update = action.run({ subjectId, targets, options })
+      const update = action.run({ actorId, targets, options })
       set((state:GameSession) => {
         state = { ...state, ...update }
         state.actionLog.push(actionRequest)
@@ -116,11 +120,13 @@ const createGame
     }
   },
 
-  every<T extends gameEntity>(type, fn) {
+  every<T extends gameEntity>(
+    type:IdType,
+    fn:((entity:T) => boolean)
+  ) : TrueId[] {
     const sliceName = SLICE_NAMES_BY_TYPE[type]
-    const slice = get()[sliceName]
     const ids: TrueId[] = []
-    get().forEach<T>(slice, entity => {
+    get().forEach<T>(sliceName, entity => {
       if (fn(entity) === true) ids.push(entity.id)
     })
     return ids
@@ -137,6 +143,7 @@ const createGame
     get().playersById[get().playerIdsBySocketId[socketId]],
 
   identify(id) {
+    // console.log(id)
     const idString = id.toString()
     switch (id.of) {
       case `Card`: return get().cardsById[idString]
@@ -169,16 +176,30 @@ const createGame
 
   match<T extends gameEntity>(type, pattern) {
     const sliceName = SLICE_NAMES_BY_TYPE[type]
-    const slice = get()[sliceName]
     let id
-    if (typeof pattern === `string`) id = slice[pattern].id
+    if (typeof pattern === `string`) {
+      const slice = get()[sliceName]
+      id = slice[pattern].id
+    }
     if (typeof pattern === `function`) {
-      get().forEach<T>(slice, entity => {
-        if (pattern(entity) === true) id = entity.id
+      get().forEach<T>(sliceName, entity => {
+        const matchFound = pattern(entity)
+        // console.log(`matchFound`, matchFound, `===`, entity)
+        if (matchFound) id = entity.id
       })
     }
     return id
   },
+
+  registerSocket: socketId => ({
+    to: (player:Player) => {
+      set(state => {
+        state.playerIdsBySocketId[socketId] = player.id.toString()
+      })
+    },
+  }),
+
+  run: (type, payload) => get().dispatch({ type, payload }),
 
   showPlayers(id) {
     set((state:GameSession) => {
@@ -188,14 +209,6 @@ const createGame
   },
 
   target: (type, id) => ({ [type]: get().match(type, id) }),
-
-  registerSocket: socketId => ({
-    to: (player:Player) => {
-      set(state => {
-        state.playerIdsBySocketId[socketId] = player.id.toString()
-      })
-    },
-  }),
 
 }))
 

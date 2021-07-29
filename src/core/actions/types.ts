@@ -38,6 +38,7 @@ export type ActionType =
   | `CREATE_ZONE`
   | `CREATE_ZONE_LAYOUT`
   | `DEAL`
+  | `DEAL_ALL`
   | `DRAW`
   | `PLACE`
   | `SHUFFLE`
@@ -53,7 +54,7 @@ export interface IVirtualActionRequest {
 }
 
 export interface IActionRequestPayload {
-  subjectId?: PlayerId
+  actorId?: PlayerId
   targets?: RealTargets
   options?: Record<string, any>
 }
@@ -73,7 +74,7 @@ export interface IAction {
 }
 
 export interface IVirtualImperative {
-  subjectId?: PlayerId
+  actorId?: PlayerId
   targets?: VirtualTargets
   type: ActionType
 }

@@ -81,8 +81,8 @@ export class Perspective { // players[playerId].virtualize(trueId)
 
   deriveImperative = (action: IActionRequest): IVirtualImperative => ({
     type: action.type,
-    subjectId: action.payload.subjectId
-    && this.virtualizeId(action.payload.subjectId),
+    actorId: action.payload.actorId
+    && this.virtualizeId(action.payload.actorId),
     targets: this.virtualizeTargets(action.payload.targets),
   })
 
@@ -119,7 +119,7 @@ export class Player extends Perspective {
 
   displayName: string
 
-  cycleIdToHandIdMap: Map<(null|CardCycleId), CardGroupId>
+  handIdsByCycleId: Record<string, CardGroupId>
 
   inbox: (CardId|CardGroupId)[]
 
@@ -130,7 +130,7 @@ export class Player extends Perspective {
   constructor(displayName:string, userId:number) {
     super()
     this.id = new PlayerId()
-    this.cycleIdToHandIdMap = new Map()
+    this.handIdsByCycleId = {}
     this.inbox = []
     this.displayName = displayName
     this.userId = userId
@@ -147,7 +147,7 @@ export class Player extends Perspective {
     return ({
       type,
       payload: {
-        subjectId: this.id,
+        actorId: this.id,
         options,
         targets: this.devirtualizeTargets(request.targets),
       },
