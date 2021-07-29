@@ -135,5 +135,6 @@ module.exports = {
     "semi-style": [`error`, `first`],
 
     "@typescript-eslint/no-explicit-any": `off`,
+    "@typescript-eslint/explicit-module-boundary-types": `off`,
   },
 }
