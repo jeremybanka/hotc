@@ -43,6 +43,8 @@ export const useHeartsActions
         run(`CLEAR_TABLE`, {})
         run(`CREATE_CARD_VALUES`, { options: { values: frenchPlayingCardDeck } })
         run(`CREATE_ZONE_LAYOUT`, { options: { id: `main-layout` } })
+        console.log(`aaaaaaaaaaaa`)
+        console.log(target(`zoneLayoutId`, `main-layout`))
         run(`CREATE_ZONE`, {
           options: { id: `main-deck-zone`, contentType: `Deck` },
           targets: target(`zoneLayoutId`, `main-layout`),

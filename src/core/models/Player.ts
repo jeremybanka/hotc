@@ -43,9 +43,11 @@ export class Perspective { // players[playerId].virtualize(trueId)
     (id: CardId): VirtualCardId
     (id: CardGroupId): VirtualCardGroupId
     (id: CardCycleId): VirtualCardCycleId
-  } = (id: TrueId): VirtualId =>
-    this.virtualIds[id.toString()]
+  } = (id: TrueId): VirtualId => {
+    console.log(id)
+    return this.virtualIds[id.toString()]
     || new anonClassDict[id.of](nanoid())
+  }
 
   virtualizeIds = (reals: TrueId[]): VirtualId[] =>
     reals.map((target:TrueId) => this.virtualizeId(target))

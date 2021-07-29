@@ -68,6 +68,8 @@ export interface GameSession extends GameData {
     type:IdType,
     pattern:string|((entity:T) => boolean))
     : TrueId
+  merge(entities:gameEntity[])
+    : {into: (sliceName:keyof GameData) => Partial<GameData>}
   registerSocket(socketId:string) : {to: (player:Player) => void}
   run(type: ActionType, payload: IActionRequestPayload): void
   showPlayers(id:TrueId) : void
@@ -99,8 +101,10 @@ const createGame
 
     try {
       const update = action.run({ actorId, targets, options })
+      // console.log(`update`, update)
       set((state:GameSession) => {
         state = { ...state, ...update }
+        // console.log(state)
         state.actionLog.push(actionRequest)
         const newPlayersById = { ...state.playersById }
         Object.values(newPlayersById).forEach(player => {
@@ -175,9 +179,13 @@ const createGame
 
   match<T extends gameEntity>(type, pattern) {
     const sliceName = SLICE_NAMES_BY_TYPE[type]
+    console.log(`type`, type, `pattern`, pattern)
     let id
     if (typeof pattern === `string`) {
       const slice = get()[sliceName]
+      // console.log(`sliceName`, sliceName)
+      // console.log(`get()`, get())
+      // console.log(`slice`, slice)
       id = slice[pattern].id
     }
     if (typeof pattern === `function`) {
@@ -189,6 +197,23 @@ const createGame
     }
     return id
   },
+
+  merge: entities => ({ into: sliceName => {
+    const slice = get()[sliceName]
+    // console.log(`into`, sliceName, `entities`, entities)
+    const newEntitiesById: Partial<typeof slice> = {}
+    entities.forEach(entity => {
+      newEntitiesById[entity.id.toString()] = entity
+    })
+    //  console.log(`newEntitiesById`, newEntitiesById)
+    // console.log(`slice`, slice)
+    return ({
+      [sliceName]: {
+        ...slice,
+        ...newEntitiesById,
+      },
+    })
+  } }),
 
   registerSocket: socketId => ({
     to: (player:Player) => {

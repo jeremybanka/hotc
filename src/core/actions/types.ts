@@ -1,4 +1,4 @@
-import { GameSession } from "../../store/game"
+import { GameData, GameSession } from "../../store/game"
 import { PlayerId, TrueId, VirtualId } from "../util/Id"
 
 export type IdType =
@@ -67,7 +67,7 @@ export interface IActionRequest {
   payload: IActionRequestPayload
 }
 
-export type IStateUpdate = Partial<GameSession>
+export type IStateUpdate = Partial<GameData>
 
 export type updateProducer = (payload:IActionRequestPayload) => IStateUpdate
 

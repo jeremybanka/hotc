@@ -31,6 +31,16 @@ export const useCoreActions
 : Record<ActionType, IAction> => {
   const set = fn => game.setState(fn)
   const get = () => game.getState()
+  const {
+    forEach,
+    getPlayers,
+    identify,
+    mapPlayers,
+    match,
+    merge,
+    run,
+    showPlayers,
+  } = get()
   return ({
 
     CLEAR_TABLE: {
@@ -72,7 +82,7 @@ export const useCoreActions
                 const hand = new Hand({})
                 return [id, hand.id] as [PlayerId, CardGroupId]
               } else if (id instanceof ZoneId) {
-                const zone = get().identify(id) as Zone
+                const zone = identify(id) as Zone
                 if (zone.ownerId instanceof PlayerId) {
                   return [zone.ownerId, id] as [PlayerId, ZoneId]
                 }
@@ -86,19 +96,15 @@ export const useCoreActions
           throw new Error(`invalid phase`)
         })
         const newCardCycle = new CardCycle({ id, phases })
-        const cardCyclesById = {
-          ...get().cardCyclesById,
-          [newCardCycle.id.toString()]: newCardCycle,
-        }
-        return { cardCyclesById }
+        return merge([newCardCycle]).into(`cardCyclesById`)
       },
     },
 
     CREATE_CARD_GROUP: {
       domain: `System`,
       run: ({ targets, options = {} }) => {
+        console.log(`targets`, targets, `options`, options)
         const classes = { Deck, Pile, Trick }
-        const { identify } = get()
         const { cardValueIds, zoneId, ownerId } = targets as {
           cardValueIds?: CardValueId[]
           ownerId?: PlayerId
@@ -118,42 +124,34 @@ export const useCoreActions
           cardsById[cardId.toString()] = card
           return cardId
         })
+        const newCards = cardIds?.map(cardId => identify(cardId) as Card) || []
         const newCardGroup = new classes[className]({ id, cardIds, ownerId })
-        const cardGroupsById = {
-          ...get().cardGroupsById,
-          [newCardGroup.id.toString()]: newCardGroup,
-        }
+
         if (zoneId) {
           try {
             const zone = identify(zoneId) as Zone
             const newZone = produce(zone, draft => draft.place(newCardGroup))
-            const zonesById = {
-              ...get().zonesById,
-              [newZone.id.toString()]: newZone,
+            return {
+              ...merge(newCards).into(`cardsById`),
+              ...merge([newCardGroup]).into(`cardGroupsById`),
+              ...merge([newZone]).into(`zonesById`),
             }
-            return { cardsById, cardGroupsById, zonesById }
           } catch (e) { console.log(e) }
         }
-        return { cardsById, cardGroupsById }
+        return {
+          ...merge(newCards).into(`cardsById`),
+          ...merge([newCardGroup]).into(`cardGroupsById`),
+        }
       },
     },
 
     CREATE_CARD_VALUES: {
       domain: `System`,
       run: ({ options }) => {
-        const { showPlayers } = get()
         const { values } = options as {values:{rank:string, suit:string}[]}
-        const newCardValuesById: Record<string, CardValue> = {}
-        values.forEach(value => {
-          const newCardValue = new CardValue({ content: value })
-          newCardValuesById[newCardValue.id.toString()] = newCardValue
-          showPlayers(newCardValue.id)
-        })
-        const cardValuesById = {
-          ...get().cardValuesById,
-          ...newCardValuesById,
-        }
-        return { cardValuesById }
+        const newCardValues: CardValue[]
+        = values.map(value => new CardValue({ content: value }))
+        return merge(newCardValues).into(`cardValuesById`)
       },
     },
 
@@ -172,18 +170,13 @@ export const useCoreActions
         const { ownerId } = targets as {ownerId:PlayerId}
         const { id } = options as {id?:string}
         const newHand = new Hand({ id, ownerId })
-        const cardGroupsById = {
-          ...get().cardGroupsById,
-          [newHand.id.toString()]: newHand,
-        }
-        return { cardGroupsById }
+        return merge([newHand]).into(`cardGroupsById`)
       },
     },
 
     CREATE_PLAYER: {
       domain: `System`,
       run: ({ options }) => {
-        const { mapPlayers, forEach } = get()
         const { userId, socketId } = options as {userId:number, socketId:string}
         const newPlayer = new Player(`displayName`, userId)
         const playerId = newPlayer.id.toString()
@@ -220,7 +213,6 @@ export const useCoreActions
     CREATE_ZONE: {
       domain: `System`,
       run: ({ targets, options = {} }) => {
-        const { identify, showPlayers } = get()
         const { zoneLayoutId, ownerId } = targets as {
           zoneLayoutId:ZoneLayoutId,
           ownerId:PlayerId
@@ -232,31 +224,25 @@ export const useCoreActions
           draft.content.push(newZone.id)
         })
         showPlayers(newZone.id)
-        const zonesById = {
-          ...get().zonesById,
-          [newZone.id.toString()]: newZone,
+        const update = {
+          ...merge([newZone]).into(`zonesById`),
+          ...merge([newZoneLayout]).into(`zoneLayoutsById`),
         }
-        const zoneLayoutsById = {
-          ...get().zoneLayoutsById,
-          [newZoneLayout.id.toString()]: newZoneLayout,
-        }
-        return { zonesById, zoneLayoutsById }
+        console.log(`update`, update)
+        return update
       },
     },
 
     CREATE_ZONE_LAYOUT: {
       domain: `System`,
       run: ({ targets = {}, options = {} }) => {
-        const { showPlayers } = get()
         const { id } = options as {id?:string}
         const { ownerId } = targets as {ownerId?:PlayerId}
         const newZoneLayout = new ZoneLayout({ id, ownerId })
+
         showPlayers(newZoneLayout.id)
-        const zoneLayoutsById = {
-          ...get().zoneLayoutsById,
-          [newZoneLayout.id.toString()]: newZoneLayout,
-        }
-        return { zoneLayoutsById }
+        console.log(`newZoneLayout`, newZoneLayout)
+        return merge([newZoneLayout]).into(`zoneLayoutsById`)
       },
     },
 
@@ -264,7 +250,6 @@ export const useCoreActions
       domain: `Deck`,
       run: ({ targets, options = {} }) => {
         // console.log(`DEAL`, targets)
-        const { run, identify, getPlayers, forEach } = get()
         const { deckId } = targets as {deckId:CardGroupId}
         let { howMany: roundsRemaining = 1 } = options as {howMany?:number}
         while (roundsRemaining) {
@@ -285,7 +270,6 @@ export const useCoreActions
       domain: `Deck`,
       run: ({ targets }) => {
         // console.log(`DEAL_ALL`, targets)
-        const { identify } = get()
         const { deckId } = targets as {deckId:CardGroupId}
         const deck = identify(deckId) as Deck
         return get().actions.DEAL.run({
@@ -299,7 +283,6 @@ export const useCoreActions
       domain: `Deck`,
       run: ({ actorId, targets }) => {
         if (!actorId) throw new Error(``)
-        const { identify, match, run } = get()
         const { deckId } = targets as {deckId:CardGroupId}
         // console.log(`DRAW`, targets, actorId)
         const actor = identify(actorId) as Player
@@ -328,31 +311,32 @@ export const useCoreActions
     MOVE: {
       domain: `System`,
       run: ({ targets, options }) => {
-        const { identify } = get()
         const { originId, destinationId }
         = targets as {
           originId:CardGroupId,
           destinationId:CardGroupId}
         const { howMany, originIdx, destinationIdx }
         = options as Record<string, number>
+
         const origin = identify(originId) as CardGroup
-        let cardIds
-        const newOrigin = produce(origin, cardGroup => {
-          cardIds = cardGroup.cardIds.splice(originIdx, howMany)
-        })
         const destination = identify(destinationId) as CardGroup
 
-        const newDestination = produce(destination, cardGroup => {
-          // console.log(`deck-${deck.id.toString()}:`, deck.cardIds.length)
-          cardGroup.cardIds.splice(destinationIdx, 0, cardIds)
-        })
+        let cardIds
 
-        const cardGroupsById = {
-          ...get().cardGroupsById,
-          [newOrigin.id.toString()]: newOrigin,
-          [newDestination.id.toString()]: newDestination,
-        }
-        return { cardGroupsById }
+        const newOrigin = produce(
+          origin,
+          cardGroup => {
+            cardIds = cardGroup.cardIds.splice(originIdx, howMany)
+          }
+        )
+        const newDestination = produce(
+          destination,
+          cardGroup => {
+            cardGroup.cardIds.splice(destinationIdx, 0, cardIds)
+          }
+        )
+
+        return merge([newOrigin, newDestination]).into(`cardGroupsById`)
       },
     },
 
@@ -363,7 +347,10 @@ export const useCoreActions
 
     SHUFFLE: {
       domain: `System`,
-      run: () => ({}),
+      run: ({ targets }) => {
+        const { deckId } = targets as {deckId:CardGroupId}
+        return ({})
+      },
     },
   })
 }
