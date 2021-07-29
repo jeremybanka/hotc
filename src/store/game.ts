@@ -13,7 +13,7 @@ import {
   IAction,
   IActionRequest,
   RealTargets,
-  targetType,
+  TargetType,
 } from '../core/actions/types'
 import { CardValue } from '../core/models/CardValue'
 import mapObject from '../core/util/mapObject'
@@ -52,7 +52,7 @@ export interface GameSession extends GameData {
   registerSocket(socketId:string) : {to: (player:Player) => void}
   showPlayers(id:TrueId) : void
   getSocketOwner(socketId:string) : Player
-  target(type:targetType, id:string) : RealTargets
+  target(type:TargetType, id:string) : RealTargets
 }
 
 const createGame

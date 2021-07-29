@@ -23,11 +23,11 @@ import {
   ZoneLayoutId,
 } from "../util/Id"
 import mapObject from "../util/mapObject"
-import  { actionType, IAction, RealTargets  } from "./types"
+import  { ActionType, IAction, RealTargets  } from "./types"
 
 export const useCoreActions
 = (game:StoreApi<GameSession>)
-: Record<actionType, IAction> => {
+: Record<ActionType, IAction> => {
   const set = fn => game.setState(fn)
   const get = () => game.getState()
   return ({

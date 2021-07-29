@@ -1,23 +1,30 @@
 import { GameSession } from "../../store/game"
 import { PlayerId, TrueId, VirtualId } from "../util/Id"
 
-export type domainType =
-  | `System`
-  | `Deck`
-
-export type optionType =
-  | `id`
-
-export type targetType =
-  | number
-  | `cardValueIds`
-  | `deckId`
-  | `ownerId`
+export type IdType =
+  | `cardCycleId`
+  | `cardGroupId`
+  | `cardValueId`
   | `playerId`
   | `zoneId`
   | `zoneLayoutId`
 
-export type actionType =
+export type TargetType =
+  | IdType
+  | number
+  | `cardValueIds`
+  | `deckId`
+  | `handId`
+  | `ownerId`
+
+export type DomainType =
+  | `System`
+  | `Deck`
+
+export type OptionType =
+  | `id`
+
+export type ActionType =
   | `CLEAR_TABLE`
   | `CREATE_CARD_CYCLE`
   | `CREATE_CARD_GROUP`
@@ -34,12 +41,12 @@ export type actionType =
   | `PLACE`
   | `SHUFFLE`
 
-export type RealTargets = Partial<Record<targetType, TrueId|TrueId[]>>
+export type RealTargets = Partial<Record<TargetType, TrueId|TrueId[]>>
 
-export type VirtualTargets = Partial<Record<targetType, VirtualId|VirtualId[]>>
+export type VirtualTargets = Partial<Record<TargetType, VirtualId|VirtualId[]>>
 
 export interface IVirtualActionRequest {
-  type: actionType
+  type: ActionType
   targets?: VirtualTargets
   options?: Record<string, (number|string)>
 }
@@ -51,7 +58,7 @@ export interface IActionRequestPayload {
 }
 
 export interface IActionRequest {
-  type: actionType
+  type: ActionType
   payload: IActionRequestPayload
 }
 
@@ -60,12 +67,12 @@ export type IStateUpdate = Partial<GameSession>
 export type updateProducer = (payload:IActionRequestPayload) => IStateUpdate
 
 export interface IAction {
-  domain: domainType
+  domain: DomainType
   run: updateProducer
 }
 
 export interface IVirtualImperative {
   subjectId?: PlayerId
   targets?: VirtualTargets
-  type: actionType
+  type: ActionType
 }

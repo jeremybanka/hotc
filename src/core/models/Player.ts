@@ -5,7 +5,7 @@ import {
   IVirtualActionRequest,
   IVirtualImperative,
   RealTargets,
-  targetType,
+  TargetType,
   VirtualTargets,
 } from "../actions/types"
 import { Card } from "."
@@ -56,7 +56,7 @@ export class Perspective { // players[playerId].virtualize(trueId)
       : this.virtualizeId(real)
 
   virtualizeTargets = (targets?:RealTargets): VirtualTargets|undefined =>
-    targets && mapObject<targetType, TrueId|TrueId[], VirtualId|VirtualId[]>(
+    targets && mapObject<TargetType, TrueId|TrueId[], VirtualId|VirtualId[]>(
       targets, this.virtualizeEntry
     )
 
@@ -75,7 +75,7 @@ export class Perspective { // players[playerId].virtualize(trueId)
       : this.virtualizeId(virtual)
 
   devirtualizeTargets = (targets?: VirtualTargets): RealTargets|undefined =>
-    targets && mapObject<targetType, VirtualId|VirtualId[], TrueId|TrueId[]>(
+    targets && mapObject<TargetType, VirtualId|VirtualId[], TrueId|TrueId[]>(
       targets, this.devirtualizeEntry
     )
 

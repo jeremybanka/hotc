@@ -3,7 +3,7 @@
 import { StoreApi } from "zustand/vanilla"
 import { GameSession } from "../store/game"
 import {
-  actionType,
+  ActionType,
   IAction, IActionRequestPayload,
 } from "../core/actions/types"
 import installCoreActions from "../core/actions"
@@ -42,8 +42,8 @@ export const useHeartsActions
         const { every, forEach, dispatch, match, target } = get()
 
         const run = (
-          type:actionType,
-          payload:IActionRequestPayload
+          type: ActionType,
+          payload: IActionRequestPayload
         ) => dispatch({ type, payload })
 
         run(`CLEAR_TABLE`, {})
