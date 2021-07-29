@@ -98,7 +98,7 @@ export const useHeartsActions
   }
 }
 
-const hearts = {
+export const hearts = {
   name: `Hearts`,
   description:
     `The classic trick-taking game where points are bad...until they're not!`,
