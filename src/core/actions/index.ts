@@ -1,4 +1,5 @@
 import produce from "immer"
+import { a } from "eny/build/node"
 import { StoreApi } from "zustand/vanilla"
 import { GameSession } from "../../store/game"
 import {
@@ -103,7 +104,7 @@ export const useCoreActions
     CREATE_CARD_GROUP: {
       domain: `System`,
       run: ({ targets, options = {} }) => {
-        console.log(`targets`, targets, `options`, options)
+        console.log(`CREATE_CARD_GROUP`)
         const classes = { Deck, Pile, Trick }
         const { cardValueIds, zoneId, ownerId } = targets as {
           cardValueIds?: CardValueId[]
@@ -115,33 +116,41 @@ export const useCoreActions
           id?:string,
           className?:keyof typeof classes
         }
-        const cardsById = { ...get().cardsById }
-        const cardIds = cardValueIds?.map(valueId => {
+        // const cardsById = { ...get().cardsById }
+        console.log(`cardValueIds`, cardValueIds?.length)
+        const newCards = cardValueIds?.map(valueId => {
           const idIsBogus = !identify(valueId)
           if (idIsBogus) throw new Error(`id ${valueId} has no real value`)
           const card = new Card(valueId)
-          const cardId = card.id
-          cardsById[cardId.toString()] = card
-          return cardId
-        })
-        const newCards = cardIds?.map(cardId => identify(cardId) as Card) || []
+          return card
+        }) || []
+        console.log(`newCards`, newCards?.length)
+
+        const cardIds = newCards.map(card => card.id)
         const newCardGroup = new classes[className]({ id, cardIds, ownerId })
 
         if (zoneId) {
+          console.log(`ZONE_ID`)
           try {
             const zone = identify(zoneId) as Zone
             const newZone = produce(zone, draft => draft.place(newCardGroup))
-            return {
+            // console.log(`New ZONE`, newZone)
+            // console.log(`newcards`, newCards)
+            const update = {
               ...merge(newCards).into(`cardsById`),
               ...merge([newCardGroup]).into(`cardGroupsById`),
               ...merge([newZone]).into(`zonesById`),
             }
+            // console.log(`UPDATE`, update)
+            return update
           } catch (e) { console.log(e) }
         }
-        return {
+        const update = {
           ...merge(newCards).into(`cardsById`),
           ...merge([newCardGroup]).into(`cardGroupsById`),
         }
+        console.log(`UPDATE`, update)
+        return update
       },
     },
 
@@ -151,6 +160,7 @@ export const useCoreActions
         const { values } = options as {values:{rank:string, suit:string}[]}
         const newCardValues: CardValue[]
         = values.map(value => new CardValue({ content: value }))
+        newCardValues.forEach(value => showPlayers(value.id))
         return merge(newCardValues).into(`cardValuesById`)
       },
     },
@@ -224,12 +234,10 @@ export const useCoreActions
           draft.content.push(newZone.id)
         })
         showPlayers(newZone.id)
-        const update = {
+        return {
           ...merge([newZone]).into(`zonesById`),
           ...merge([newZoneLayout]).into(`zoneLayoutsById`),
         }
-        console.log(`update`, update)
-        return update
       },
     },
 
@@ -241,7 +249,6 @@ export const useCoreActions
         const newZoneLayout = new ZoneLayout({ id, ownerId })
 
         showPlayers(newZoneLayout.id)
-        console.log(`newZoneLayout`, newZoneLayout)
         return merge([newZoneLayout]).into(`zoneLayoutsById`)
       },
     },
@@ -349,6 +356,8 @@ export const useCoreActions
       domain: `System`,
       run: ({ targets }) => {
         const { deckId } = targets as {deckId:CardGroupId}
+        const deck = identify(deckId) as Deck
+        // const newDeck = produce(deck, draft => )
         return ({})
       },
     },

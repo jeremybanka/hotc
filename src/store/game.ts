@@ -179,19 +179,17 @@ const createGame
 
   match<T extends gameEntity>(type, pattern) {
     const sliceName = SLICE_NAMES_BY_TYPE[type]
-    console.log(`type`, type, `pattern`, pattern)
     let id
     if (typeof pattern === `string`) {
       const slice = get()[sliceName]
-      // console.log(`sliceName`, sliceName)
-      // console.log(`get()`, get())
-      // console.log(`slice`, slice)
+      console.log(`sliceName`, sliceName)
+      console.log(`pattern`, pattern)
+      // console.log(get())
       id = slice[pattern].id
     }
     if (typeof pattern === `function`) {
       get().forEach<T>(sliceName, entity => {
         const matchFound = pattern(entity)
-        // console.log(`matchFound`, matchFound, `===`, entity)
         if (matchFound) id = entity.id
       })
     }
@@ -200,13 +198,10 @@ const createGame
 
   merge: entities => ({ into: sliceName => {
     const slice = get()[sliceName]
-    // console.log(`into`, sliceName, `entities`, entities)
     const newEntitiesById: Partial<typeof slice> = {}
     entities.forEach(entity => {
       newEntitiesById[entity.id.toString()] = entity
     })
-    //  console.log(`newEntitiesById`, newEntitiesById)
-    // console.log(`slice`, slice)
     return ({
       [sliceName]: {
         ...slice,
