@@ -36,7 +36,8 @@ export class PlayingCard {
 type Enum = Record<string, string>
 
 export const generatePlayingCardDeck
-= (ranks:Enum, suits:Enum): PlayingCard[] => {
+= (ranks:Enum, suits:Enum)
+: PlayingCard[] => {
   const playingCards: PlayingCard[] = []
   for (const s in suits) {
     if (Object.prototype.hasOwnProperty.call(suits, s)) {

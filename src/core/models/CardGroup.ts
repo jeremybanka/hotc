@@ -84,7 +84,9 @@ export class Pile extends CardGroup {
     this.privacy = props.privacy || `public`
   }
 
-  flip = (): void => { this.privacy = toggle(this.privacy, `hidden`, `public`) }
+  flip = (): void => {
+    this.privacy = toggle(this.privacy, `hidden`, `public`)
+  }
 }
 
 export class Trick extends CardGroup { class = `Trick` }

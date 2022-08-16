@@ -9,24 +9,6 @@ import installCoreActions from "../core/actions"
 import { frenchPlayingCardDeck } from "./PlayingCard"
 import { CardGroup, Player, Zone } from "../core/models"
 
-// actions
-// [s] shuffle deck
-//     change the order of a single cardgroup
-// [D] deal cards (keep remainder "public" but hidden)
-//     (playersToReceive:PlayerId[]=all, howManyPerPlayer:number=1)
-//     pass card from top of deck to each player, x times
-// [S] sort hand
-//     organize a cardgroup by the id of the card entities
-// [h] create new hand
-// [w] switch cards to other hand, three times
-// [p] pass hand of cards to other player (change keeper of zone)
-// [o] offer card (pass to public zone)
-//
-
-// layouts: infinite and finite
-// infinite layouts can have a new zone appended at any time
-// finite layouts have a certain number of zones that are "filled"
-
 export const useHeartsActions
 = (game:StoreApi<GameSession>)
 : Record<string, IAction> => {
@@ -43,7 +25,6 @@ export const useHeartsActions
         run(`CLEAR_TABLE`, {})
         run(`CREATE_CARD_VALUES`, { options: { values: frenchPlayingCardDeck } })
         run(`CREATE_ZONE_LAYOUT`, { options: { id: `main-layout` } })
-        console.log(target(`zoneLayoutId`, `main-layout`))
         run(`CREATE_ZONE`, {
           options: { id: `main-deck-zone`, contentType: `Deck` },
           targets: target(`zoneLayoutId`, `main-layout`),

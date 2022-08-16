@@ -1,6 +1,16 @@
 import create, { StoreApi } from 'zustand/vanilla'
 import produce from 'immer'
-import { GameId, TrueId } from '../core/util/Id'
+import { ids } from 'webpack'
+import {
+  CardGroupId,
+  CardId,
+  CardValueId,
+  GameId,
+  PlayerId,
+  TrueId,
+  ZoneId,
+  ZoneLayoutId,
+} from '../core/util/Id'
 import {
   Card,
   CardCycle,
@@ -49,6 +59,15 @@ export interface GameData {
   zoneLayoutsById: Record<string, ZoneLayout>
 }
 
+interface Identify {
+  (id:CardId) : Card
+  (id:CardGroupId) : CardGroup
+  (id:CardValueId) : CardValue
+  (id:PlayerId) : Player
+  (id:ZoneId) : Zone
+  (id:ZoneLayoutId) : ZoneLayout
+}
+
 export interface GameSession extends GameData {
   id: GameId
   actions: Record<string, IAction>
@@ -60,7 +79,7 @@ export interface GameSession extends GameData {
   forEach<T>(slice: keyof GameData, fn:(entity:T) => void) : void
   getPlayers(): Player[]
   getSocketOwner(socketId:string) : Player
-  identify(id:TrueId) : unknown
+  identify: Identify
   mapPlayers(fn:(player:Player) => void) : Record<string, Player>
   mapEach(slice: keyof GameData, fn:(entity:gameEntity) => gameEntity)
     : Partial<Record<string, gameEntity>>
@@ -97,7 +116,7 @@ const createGame
     const { actorId, targets, options } = payload
     const action = get().actions[type]
 
-    console.log(`action`, type, { ...payload, actorId: actorId?.toString() })
+    // console.log(`action`, type, { ...payload, actorId: actorId?.toString() })
 
     try {
       const update = action.run({ actorId, targets, options })
@@ -148,16 +167,18 @@ const createGame
   identify(id) {
     // console.log(id)
     const idString = id.toString()
-    switch (id.of) {
-      case `Card`: return get().cardsById[idString]
-      case `CardCycle`: return get().cardCyclesById[idString]
-      case `CardGroup`: return get().cardGroupsById[idString]
-      case `CardValue`: return get().cardValuesById[idString]
-      case `Player`: return get().playersById[idString]
-      case `Zone`: return get().zonesById[idString]
-      case `ZoneLayout`: return get().zoneLayoutsById[idString]
-      default: throw new Error(`id of unknown entity`)
-    }
+    const g = get()
+    const result = {
+      Card: g.cardsById[idString],
+      CardCycle: g.cardCyclesById[idString],
+      CardGroup: g.cardGroupsById[idString],
+      CardValue: g.cardValuesById[idString],
+      Player: g.playersById[idString],
+      Zone: g.zonesById[idString],
+      ZoneLayout: g.zoneLayoutsById[idString],
+    }[id.of]
+    if (result) return result
+    throw new Error(`id of unknown entity`)
   },
 
   mapEach: (
@@ -182,8 +203,8 @@ const createGame
     let id
     if (typeof pattern === `string`) {
       const slice = get()[sliceName]
-      console.log(`sliceName`, sliceName)
-      console.log(`pattern`, pattern)
+      // console.log(`sliceName`, sliceName)
+      // console.log(`pattern`, pattern)
       // console.log(get())
       id = slice[pattern].id
     }
