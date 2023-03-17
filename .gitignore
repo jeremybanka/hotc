@@ -4,3 +4,4 @@ coverage
 package-lock.json
 .DS_STORE
 src/lab
+.env

@@ -104,7 +104,7 @@ export const useCoreActions
     CREATE_CARD_GROUP: {
       domain: `System`,
       run: ({ targets, options = {} }) => {
-        console.log(`CREATE_CARD_GROUP`)
+        // console.log(`CREATE_CARD_GROUP`)
         const classes = { Deck, Pile, Trick }
         const { cardValueIds, zoneId, ownerId } = targets as {
           cardValueIds?: CardValueId[]
@@ -117,20 +117,20 @@ export const useCoreActions
           className?:keyof typeof classes
         }
         // const cardsById = { ...get().cardsById }
-        console.log(`cardValueIds`, cardValueIds?.length)
+        // console.log(`cardValueIds`, cardValueIds?.length)
         const newCards = cardValueIds?.map(valueId => {
           const idIsBogus = !identify(valueId)
           if (idIsBogus) throw new Error(`id ${valueId} has no real value`)
           const card = new Card(valueId)
           return card
         }) || []
-        console.log(`newCards`, newCards?.length)
+        // console.log(`newCards`, newCards?.length)
 
         const cardIds = newCards.map(card => card.id)
         const newCardGroup = new classes[className]({ id, cardIds, ownerId })
 
         if (zoneId) {
-          console.log(`ZONE_ID`)
+          // console.log(`ZONE_ID`)
           try {
             const zone = identify(zoneId) as Zone
             const newZone = produce(zone, draft => draft.place(newCardGroup))
@@ -149,7 +149,7 @@ export const useCoreActions
           ...merge(newCards).into(`cardsById`),
           ...merge([newCardGroup]).into(`cardGroupsById`),
         }
-        console.log(`UPDATE`, update)
+        // console.log(`UPDATE`, update)
         return update
       },
     },
@@ -292,8 +292,8 @@ export const useCoreActions
         if (!actorId) throw new Error(``)
         const { deckId } = targets as {deckId:CardGroupId}
         // console.log(`DRAW`, targets, actorId)
-        const actor = identify(actorId) as Player
-        const targetDeck = identify(deckId) as Deck
+        const actor = identify(actorId) as Player | undefined
+        const targetDeck = identify(deckId) as Deck | undefined
         if (!actor) throw new Error(``)
         if (!targetDeck) throw new Error(``)
 
@@ -325,7 +325,7 @@ export const useCoreActions
         const { howMany, originIdx, destinationIdx }
         = options as Record<string, number>
 
-        const origin = identify(originId) as CardGroup
+        const origin: CardGroup = identify(originId)
         const destination = identify(destinationId) as CardGroup
 
         let cardIds
@@ -354,10 +354,8 @@ export const useCoreActions
 
     SHUFFLE: {
       domain: `System`,
-      run: ({ targets }) => {
-        const { deckId } = targets as {deckId:CardGroupId}
-        const deck = identify(deckId) as Deck
-        // const newDeck = produce(deck, draft => )
+      run: () => {
+        console.log(`shuffle`)
         return ({})
       },
     },

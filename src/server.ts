@@ -14,7 +14,7 @@ export const server = new HttpServer(app)
 export const io = new WebSocketServer(
   server,
   { cors: {
-    origin: [`http://localhost:${CLIENT_PORT}`, `http://selena.local:3000`],
+    origin: [`http://localhost:${CLIENT_PORT}`, `http://eris.local:3000`],
     methods: [`GET`, `POST`],
   } })
 
